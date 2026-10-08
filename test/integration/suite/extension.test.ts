@@ -32,7 +32,7 @@ async function waitFor<T>(
 }
 
 const graphStatus = (uri: vscode.Uri) =>
-	vscode.commands.executeCommand<GraphStatus | null>("terrapin._graphStatus", uri.toString());
+	vscode.commands.executeCommand<GraphStatus | null>("carapace._graphStatus", uri.toString());
 
 async function openFixture(name: string) {
 	const document = await vscode.workspace.openTextDocument(fixture(name));
@@ -54,16 +54,16 @@ describe("Carapace extension", () => {
 		const { document } = await openFixture("sample.ttl");
 		assert.strictEqual(document.languageId, "turtle");
 
-		const extension = vscode.extensions.all.find((e) => e.packageJSON.name === "terrapin-turtle-graph");
+		const extension = vscode.extensions.all.find((e) => e.packageJSON.name === "carapace-turtle-vscode");
 		assert.ok(extension, "extension is installed");
 		await waitFor(() => extension.isActive, Boolean, "activation");
 
 		const commands = await vscode.commands.getCommands(true);
 		for (const command of [
-			"terrapin.showGraph",
-			"terrapin.showGraphToSide",
-			"terrapin.exportSvg",
-			"terrapin.convertRdfXml"
+			"carapace.showGraph",
+			"carapace.showGraphToSide",
+			"carapace.exportSvg",
+			"carapace.convertRdfXml"
 		]) {
 			assert.ok(commands.includes(command), `${command} is registered`);
 		}
@@ -78,7 +78,7 @@ describe("Carapace extension", () => {
 		);
 		assert.strictEqual(diagnostics.length, 1);
 		assert.strictEqual(diagnostics[0].severity, vscode.DiagnosticSeverity.Error);
-		assert.strictEqual(diagnostics[0].source, "terrapin");
+		assert.strictEqual(diagnostics[0].source, "carapace");
 		assert.strictEqual(diagnostics[0].range.start.line, lineOf(document, "ex:Other ex:relatesTo"));
 
 		const clean = await openFixture("sample.ttl");
@@ -130,7 +130,7 @@ describe("Carapace extension", () => {
 
 	it("opens a live graph next to the editor", async () => {
 		const { document, editor } = await openFixture("sample.ttl");
-		await vscode.commands.executeCommand("terrapin.showGraphToSide");
+		await vscode.commands.executeCommand("carapace.showGraphToSide");
 
 		const initial = await waitFor(
 			() => graphStatus(document.uri),
@@ -165,7 +165,7 @@ describe("Carapace extension", () => {
 
 	it("reveals the node at the cursor", async () => {
 		const { document, editor } = await openFixture("sample.ttl");
-		await vscode.commands.executeCommand("terrapin.showGraphToSide");
+		await vscode.commands.executeCommand("carapace.showGraphToSide");
 		await waitFor(
 			() => graphStatus(document.uri),
 			(s) => !!s && !s.loading && s.nodes > 0,
@@ -175,7 +175,7 @@ describe("Carapace extension", () => {
 		await vscode.window.showTextDocument(document, editor.viewColumn);
 		const line = lineOf(document, "rdfs:range ex:Department");
 		editor.selection = new vscode.Selection(line, 4, line, 4);
-		await vscode.commands.executeCommand("terrapin.revealNodeAtCursor");
+		await vscode.commands.executeCommand("carapace.revealNodeAtCursor");
 
 		await waitFor(
 			() => graphStatus(document.uri),
@@ -186,20 +186,20 @@ describe("Carapace extension", () => {
 
 	it("toggles the layout lock from the command palette", async () => {
 		const { document } = await openFixture("sample.ttl");
-		await vscode.commands.executeCommand("terrapin.showGraphToSide");
+		await vscode.commands.executeCommand("carapace.showGraphToSide");
 		await waitFor(
 			() => graphStatus(document.uri),
 			(s) => !!s && !s.loading && s.nodes > 0,
 			"graph"
 		);
 
-		await vscode.commands.executeCommand("terrapin.toggleLock");
+		await vscode.commands.executeCommand("carapace.toggleLock");
 		await waitFor(
 			() => graphStatus(document.uri),
 			(s) => !!s?.locked,
 			"locked"
 		);
-		await vscode.commands.executeCommand("terrapin.toggleLock");
+		await vscode.commands.executeCommand("carapace.toggleLock");
 		await waitFor(
 			() => graphStatus(document.uri),
 			(s) => s?.locked === false,
@@ -208,7 +208,7 @@ describe("Carapace extension", () => {
 	});
 
 	it("creates a sample ontology with its graph", async () => {
-		await vscode.commands.executeCommand("terrapin.newSampleOntology");
+		await vscode.commands.executeCommand("carapace.newSampleOntology");
 		const editor = await waitFor(
 			() =>
 				vscode.window.visibleTextEditors.find(
@@ -225,7 +225,7 @@ describe("Carapace extension", () => {
 	});
 
 	it("converts RDF/XML to Turtle", async () => {
-		await vscode.commands.executeCommand("terrapin.convertRdfXml", fixture("zoo.rdf"));
+		await vscode.commands.executeCommand("carapace.convertRdfXml", fixture("zoo.rdf"));
 		const editor = await waitFor(
 			() => vscode.window.activeTextEditor,
 			(e) => !!e && e.document.languageId === "turtle",

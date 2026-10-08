@@ -5,7 +5,7 @@ import type { GraphSettings } from "../core/settings";
 import { normaliseGraphSettings } from "../core/settings";
 import type { FollowCursorMode, ViewConfig } from "../shared/protocol";
 
-const SECTION = "terrapin";
+const SECTION = "carapace";
 
 /** Expands `rdfs:label`-style names using the built-in prefixes, so settings can be written either way. */
 export function expandBuiltinPrefix(value: string): string {

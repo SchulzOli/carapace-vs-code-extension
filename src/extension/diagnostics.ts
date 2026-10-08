@@ -19,13 +19,13 @@ export function toDiagnostic(error: TurtleError, document: vscode.TextDocument):
 		Math.max(textLine.range.end.character, textLine.firstNonWhitespaceCharacterIndex + 1)
 	);
 	const diagnostic = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
-	diagnostic.source = "terrapin";
+	diagnostic.source = "carapace";
 	return diagnostic;
 }
 
 /** Reports Turtle syntax errors of open documents in the Problems panel. */
 export class TurtleDiagnostics implements vscode.Disposable {
-	private readonly collection = vscode.languages.createDiagnosticCollection("terrapin");
+	private readonly collection = vscode.languages.createDiagnosticCollection("carapace");
 	private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
 	private readonly disposables: vscode.Disposable[] = [this.collection];
 
@@ -39,7 +39,7 @@ export class TurtleDiagnostics implements vscode.Disposable {
 				this.cache.delete(doc.uri);
 			}),
 			vscode.workspace.onDidChangeConfiguration((event) => {
-				if (event.affectsConfiguration("terrapin.diagnostics")) this.validateAll();
+				if (event.affectsConfiguration("carapace.diagnostics")) this.validateAll();
 			})
 		);
 		this.validateAll();

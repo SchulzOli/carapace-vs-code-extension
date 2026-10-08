@@ -1,11 +1,18 @@
 name: CI
 
 on:
+    # pull requests are tested via pull_request; pushes only for main, so a PR push doesn't start two runs
+    # (release tags are tested by the release workflow)
     push:
-        branches: ["**"] # release tags are tested by the release workflow
+        branches: [main]
     pull_request:
     workflow_dispatch:
     workflow_call:
+
+# a newer push to the same pull request supersedes the running checks
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
     contents: read
@@ -14,6 +21,7 @@ jobs:
     check:
         name: Lint, unit & webview tests, package
         runs-on: ubuntu-24.04
+        timeout-minutes: 20
         steps:
             - uses: actions/checkout@v7
             - uses: actions/setup-node@v7
@@ -53,6 +61,8 @@ jobs:
             matrix:
                 os: [ubuntu-24.04, windows-latest, macos-latest]
         runs-on: ${{ matrix.os }}
+        # a hung VS Code must not hold a (scarce) macOS runner for hours; queue time does not count
+        timeout-minutes: 20
         steps:
             - uses: actions/checkout@v7
             - uses: actions/setup-node@v7

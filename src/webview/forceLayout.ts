@@ -23,6 +23,11 @@ export async function runForceLayout(
 	const nodes: LayoutNode[] = input.nodes.map((n) => ({ ...n }));
 	const links: LayoutLink[] = input.edges.map((e) => ({ ...e }));
 
+	// Unconnected nodes feel only repulsion and drift far out, which makes "fit to view" zoom everything tiny;
+	// pull them towards the centre a little harder than connected ones.
+	const linked = new Set(input.edges.flatMap((e) => [e.source, e.target]));
+	const centring = (node: LayoutNode) => (linked.has(node.id) ? 0.015 : 0.08);
+
 	const sim = forceSimulation<LayoutNode>(nodes)
 		.alpha(1)
 		.alphaDecay(0.01)
@@ -42,8 +47,8 @@ export async function runForceLayout(
 			"collide",
 			forceCollide<LayoutNode>().radius((node) => Math.max(node.width, node.height) / 2 + 15)
 		)
-		.force("x", forceX<LayoutNode>(input.width / 2).strength(0.015))
-		.force("y", forceY<LayoutNode>(input.height / 2).strength(0.015))
+		.force("x", forceX<LayoutNode>(input.width / 2).strength(centring))
+		.force("y", forceY<LayoutNode>(input.height / 2).strength(centring))
 		.stop();
 
 	while (sim.alpha() > sim.alphaMin()) {

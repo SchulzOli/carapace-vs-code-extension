@@ -44,7 +44,7 @@ This extension brings [**Carapace**](https://github.com/sellsol/carapace), the t
     - annotations `{| … |}`
     - base direction on language tags (`"text"@ar--rtl`)
 
-    Triple terms appear as **Triple Term** nodes. Identical triple terms share one node, and they can be hidden like any other entity type. Clicking a reifier jumps to the reified statement. N3-only syntax (formulas, `=>`, variables) is reported as an error.
+    Triple terms appear as **Triple Term** nodes, linked by dashed lines to their subject and object nodes. Identical triple terms share one node, and they can be hidden like any other entity type. Annotations (`{| … |}`) are drawn on the triple term they describe. Named reifiers are shown as instances. Clicking a reifier jumps to the reified statement. N3-only syntax (formulas, `=>`, variables) is reported as an error.
 
 - **Turtle language support.**
     - Syntax highlighting, including the Turtle 1.2 syntax.

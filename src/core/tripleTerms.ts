@@ -20,6 +20,13 @@ export function isTripleTerm(term: { termType: string }): boolean {
 	return term.termType === "Quad";
 }
 
+const SHORTHAND_LITERALS = new Map<string, RegExp>([
+	[XSD_NS + "integer", /^[+-]?\d+$/],
+	[XSD_NS + "decimal", /^[+-]?\d*\.\d+$/],
+	[XSD_NS + "double", /^[+-]?(\d+\.?\d*|\.\d+)[eE][+-]?\d+$/],
+	[XSD_NS + "boolean", /^(true|false)$/]
+]);
+
 /** Blank node labels change on every parse (`b12_x`); keep only the part written in the document. */
 function stableBlankLabel(value: string): string {
 	const match = /^b\d+_(.+)$/.exec(value);
@@ -59,7 +66,10 @@ export function formatTerm(term: RdfTerm, prefixes: Record<string, string>): str
 			const value = JSON.stringify(term.value);
 			if (term.language) return `${value}@${term.language}${term.direction ? `--${term.direction}` : ""}`;
 			const datatype = term.datatype?.value ?? XSD_NS + "string";
-			return datatype === XSD_NS + "string" ? value : `${value}^^${shortIri(datatype, prefixes)}`;
+			if (datatype === XSD_NS + "string") return value;
+			// Turtle's shorthand for numbers and booleans
+			if (SHORTHAND_LITERALS.get(datatype)?.test(term.value)) return term.value;
+			return `${value}^^${shortIri(datatype, prefixes)}`;
 		}
 		case "BlankNode": {
 			const label = stableBlankLabel(term.value);

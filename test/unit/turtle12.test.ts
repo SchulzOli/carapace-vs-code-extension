@@ -134,4 +134,84 @@ describe("Turtle 1.2", () => {
 		expect(termAt(line, 22)?.text).toBe("émoji:café");
 		expect(resolveTerm("émoji:café", { "http://e/": "émoji" })).toBe("http://e/café");
 	});
+	describe("graph of reifiers and annotations", () => {
+		const ANNOTATED = `PREFIX : <http://example/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+:alice a :Person ; :age 42 .
+:alice :knows :bob {| :since "2019-04-01"^^xsd:date ; :source :wiki |} .
+<< :alice :age 42 ~ :ageClaim >> :confidence 0.7 .
+:carol :believes <<( :alice :livesIn :paris )>> .
+:typedClaim a :Claim .
+<< :bob :knows :alice ~ :typedClaim >> .`;
+
+		function graph(hidden?: Parameters<typeof buildGraph>[1]["hiddenEntityTypes"]) {
+			const analysis = analyseTurtle(ANNOTATED);
+			expect(analysis.error).toBeNull();
+			const settings = hidden ? { ...defaultGraphSettings(), hiddenEntityTypes: hidden } : defaultGraphSettings();
+			return buildGraph(analysis.triples, settings, [], analysis.prefixMap, analysis.lineMapping);
+		}
+
+		it("draws annotations on the triple term instead of a hidden blank reifier", () => {
+			const { nodes, edges } = graph();
+			const statement = nodes.find((n) => n.label === "<<( :alice :knows :bob )>>")!;
+			expect(statement).toBeDefined();
+
+			const since = edges.find((e) => e.source === statement && e.label === "since");
+			expect(since?.target.nodeType).toBe("literal");
+			expect(since?.target.label).toBe("2019-04-01");
+			expect(
+				edges.some((e) => e.source === statement && e.label === "source" && e.target.uri === EX + "wiki")
+			).toBe(true);
+
+			expect(nodes.some((n) => n.blank)).toBe(false);
+			expect(edges.some((e) => e.label === "rdf:reifies" && e.source.blank)).toBe(false);
+		});
+
+		it("links triple terms to the nodes of their subject and object", () => {
+			const { nodes, edges } = graph();
+			const linked = (label: string) =>
+				edges
+					.filter((e) => e.termEdge && e.source.label === label)
+					.map((e) => e.target.uri)
+					.sort();
+
+			expect(linked("<<( :alice :knows :bob )>>")).toEqual([EX + "alice", EX + "bob"]);
+			// the literal object is the node of the asserted triple :alice :age 42
+			const age = nodes.find((n) => n.nodeType === "literal" && n.label === "42")!;
+			expect(linked("<<( :alice :age 42 )>>")).toEqual([EX + "alice", age.uri].sort());
+			// :paris only occurs inside the triple term, so there is no node to link to
+			expect(linked("<<( :alice :livesIn :paris )>>")).toEqual([EX + "alice"]);
+
+			const termEdges = edges.filter((e) => e.termEdge);
+			expect(termEdges.every((e) => e.label === "" && e.source.nodeType === "tripleTerm")).toBe(true);
+		});
+
+		it("classifies named reifiers as instances unless they are typed", () => {
+			const { nodes } = graph();
+			expect(nodes.find((n) => n.uri === EX + "ageClaim")?.nodeType).toBe("instance");
+			expect(nodes.find((n) => n.uri === EX + "typedClaim")?.nodeType).toBe("instance");
+			const typedAs = analyseTurtle(ANNOTATED).triples.find(
+				(q) => q.subject.value === EX + "typedClaim" && q.object.value === EX + "Claim"
+			);
+			expect(typedAs).toBeDefined();
+		});
+
+		it("hides annotations together with triple terms", () => {
+			const { nodes, edges } = graph(["blank", "tripleTerm"]);
+			expect(nodes.some((n) => n.nodeType === "tripleTerm")).toBe(false);
+			expect(edges.some((e) => e.termEdge || e.label === "since")).toBe(false);
+			expect(nodes.some((n) => n.label === "2019-04-01")).toBe(false);
+		});
+
+		it("still draws a named blank reifier normally when blank nodes are shown", () => {
+			const analysis = analyseTurtle(
+				"PREFIX : <http://example/>\n_:r1 :note 1 .\n_:r1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies> <<( :a :b :c )>> , <<( :d :e :f )>> ."
+			);
+			const settings = { ...defaultGraphSettings(), hiddenEntityTypes: [] };
+			const { nodes, edges } = buildGraph(analysis.triples, settings, [], analysis.prefixMap);
+			// reifying two statements: no collapse, the blank node stays and points at both
+			expect(edges.filter((e) => e.label === "rdf:reifies" && e.source.blank)).toHaveLength(2);
+			expect(nodes.filter((n) => n.nodeType === "tripleTerm")).toHaveLength(2);
+		});
+	});
 });

@@ -1,3 +1,4 @@
+import type { RdfTerm } from "./tripleTerms";
 import type { CollectionType, EntityType } from "./types";
 
 export class NodeDescriptor {
@@ -25,6 +26,9 @@ export class NodeDescriptor {
 
 	isBridge = true;
 	bridgeTarget: string | null = null;
+
+	/** RDF 1.2: triple terms this node reifies (it is the subject of `rdf:reifies`). */
+	reifiedTerms: RdfTerm[] = [];
 }
 
 export interface CollectionDescriptor {

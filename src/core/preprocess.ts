@@ -1,6 +1,14 @@
 import type { Quad, Term } from "n3";
 
-import { INFERRED_TYPES, PREDICATE_TO_COLLECTION, RDF_FIRST, RDF_NIL, RDF_REST, TYPE_PREDICATES } from "./namespaces";
+import {
+	INFERRED_TYPES,
+	PREDICATE_TO_COLLECTION,
+	RDF_FIRST,
+	RDF_NIL,
+	RDF_REIFIES,
+	RDF_REST,
+	TYPE_PREDICATES
+} from "./namespaces";
 import type { CollectionDescriptor } from "./processor";
 import { NodeDescriptor } from "./processor";
 import type { GraphSettings } from "./settings";
@@ -8,6 +16,7 @@ import type { LineMapping } from "./lines";
 import { classifyUriType, resolveLocalName } from "./ontology";
 import { inHiddenNamespace } from "./settings";
 import { isTripleTerm } from "./tripleTerms";
+import type { RdfTerm } from "./tripleTerms";
 
 export class Preprocessor {
 	settings: GraphSettings;
@@ -29,6 +38,7 @@ export class Preprocessor {
 			this.digestBlank(quad);
 			this.digestChain(quad);
 			this.digestCollection(quad);
+			this.digestReifier(quad);
 			this.digestType(quad);
 			this.digestName(quad);
 			this.digestFingerprint(quad);
@@ -91,6 +101,16 @@ export class Preprocessor {
 		objectDescriptor.isCollection = true;
 		objectDescriptor.collectionType = collectionType;
 		objectDescriptor.collectionSource = quad.subject.value;
+	}
+
+	/** RDF 1.2 reifiers: `r rdf:reifies <<( s p o )>>`, written as `<< s p o ~ r >>` or `s p o {| ... |}`. */
+	private digestReifier(quad: Quad) {
+		if (quad.predicate.value !== RDF_REIFIES || !isTripleTerm(quad.object)) return;
+
+		const descriptor = this.getDescriptor(quad.subject.value);
+		descriptor.reifiedTerms.push(quad.object as unknown as RdfTerm);
+		// a reifier is an individual standing for the statement, unless typed otherwise
+		if (quad.subject.termType === "NamedNode" && !descriptor.nodeType) descriptor.nodeType = "instance";
 	}
 
 	private digestType(quad: Quad) {

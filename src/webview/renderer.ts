@@ -348,7 +348,7 @@ function arrowHead(tipX: number, tipY: number, ux: number, uy: number) {
 export function createEdgeElement(edge: Edge, highlighted: boolean): SVGGElement {
 	const { source, target } = edge;
 	const g = svg("g", {
-		class: `edge${edge.collectionEdge ? " collection-edge" : ""}${highlighted ? " highlighted" : ""}`,
+		class: `edge${edge.collectionEdge ? " collection-edge" : ""}${edge.termEdge ? " term-edge" : ""}${highlighted ? " highlighted" : ""}`,
 		"data-id": edge.id
 	});
 	const strokeWidth = highlighted ? 3 : 1.5;
@@ -397,15 +397,16 @@ export function createEdgeElement(edge: Edge, highlighted: boolean): SVGGElement
 				x2,
 				y2,
 				"stroke-width": strokeWidth,
-				"stroke-dasharray": edge.collectionEdge ? 5 : null
-			}),
-			svg("polygon", { class: "edge-arrow", points: arrowHead(tipX, tipY, ux, uy) })
+				"stroke-dasharray": edge.collectionEdge ? 5 : edge.termEdge ? "2 4" : null
+			})
 		);
+		// links from a triple term to its parts are not statements, so they get no arrow
+		if (!edge.termEdge) g.append(svg("polygon", { class: "edge-arrow", points: arrowHead(tipX, tipY, ux, uy) }));
 		labelX = (x1 + x2) / 2;
 		labelY = (y1 + y2) / 2;
 	}
 
-	if (!edge.collectionEdge) {
+	if (!edge.collectionEdge && !edge.termEdge) {
 		const text = svg("text", {
 			class: "edge-label",
 			x: labelX,

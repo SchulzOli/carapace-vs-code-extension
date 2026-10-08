@@ -39,6 +39,8 @@ export type Edge = {
 	label: string; // includes any prefix here so multiple prefix-label pairs can be stored
 
 	collectionEdge: boolean;
+	/** RDF 1.2: unlabelled link from a triple term node to its subject or object node. */
+	termEdge: boolean;
 };
 
 export type GraphSearchResult = { kind: "node"; node: Node } | { kind: "edge"; edge: Edge };

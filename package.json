@@ -1,0 +1,429 @@
+{
+	"name": "carapace-vscode",
+	"displayName": "Carapace — Turtle Graph Visualiser",
+	"description": "Live OWL-aware graph visualisation for Turtle (TTL) ontologies, right next to your editor. A VS Code port of Carapace.",
+	"version": "0.1.0",
+	"publisher": "schulzoli",
+	"license": "GPL-3.0-or-later",
+	"icon": "media/icon.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/SchulzOli/carapace-vs-code-extension.git"
+	},
+	"bugs": {
+		"url": "https://github.com/SchulzOli/carapace-vs-code-extension/issues"
+	},
+	"engines": {
+		"vscode": "^1.95.0"
+	},
+	"categories": [
+		"Visualization",
+		"Programming Languages",
+		"Linters"
+	],
+	"keywords": [
+		"turtle",
+		"ttl",
+		"rdf",
+		"owl",
+		"ontology",
+		"graph",
+		"semantic web",
+		"knowledge graph"
+	],
+	"main": "./dist/extension.js",
+	"activationEvents": [
+		"onLanguage:turtle",
+		"onWebviewPanel:carapace.graph"
+	],
+	"contributes": {
+		"languages": [
+			{
+				"id": "turtle",
+				"aliases": [
+					"Turtle",
+					"turtle",
+					"TTL"
+				],
+				"extensions": [
+					".ttl"
+				],
+				"mimetypes": [
+					"text/turtle"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "turtle",
+				"scopeName": "source.turtle",
+				"path": "./syntaxes/turtle.tmLanguage.json"
+			}
+		],
+		"commands": [
+			{
+				"command": "carapace.showGraphToSide",
+				"title": "Open Graph to the Side",
+				"category": "Carapace",
+				"icon": "$(type-hierarchy-sub)"
+			},
+			{
+				"command": "carapace.showGraph",
+				"title": "Open Graph",
+				"category": "Carapace",
+				"icon": "$(type-hierarchy-sub)"
+			},
+			{
+				"command": "carapace.revealNodeAtCursor",
+				"title": "Reveal Node at Cursor in Graph",
+				"category": "Carapace"
+			},
+			{
+				"command": "carapace.fitView",
+				"title": "Fit Graph to View",
+				"category": "Carapace",
+				"icon": "$(screen-full)"
+			},
+			{
+				"command": "carapace.relayout",
+				"title": "Re-run Graph Layout",
+				"category": "Carapace",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "carapace.toggleLock",
+				"title": "Toggle Graph Lock",
+				"category": "Carapace",
+				"icon": "$(lock)"
+			},
+			{
+				"command": "carapace.find",
+				"title": "Search Graph",
+				"category": "Carapace",
+				"icon": "$(search)"
+			},
+			{
+				"command": "carapace.toggleSettings",
+				"title": "Graph Settings",
+				"category": "Carapace",
+				"icon": "$(settings-gear)"
+			},
+			{
+				"command": "carapace.exportSvg",
+				"title": "Export Graph as SVG",
+				"category": "Carapace"
+			},
+			{
+				"command": "carapace.exportPng",
+				"title": "Export Graph as PNG",
+				"category": "Carapace"
+			},
+			{
+				"command": "carapace.resetGraphSettings",
+				"title": "Reset Graph Settings for Document",
+				"category": "Carapace"
+			},
+			{
+				"command": "carapace.clearSavedLayout",
+				"title": "Forget Saved Layout for Document",
+				"category": "Carapace"
+			},
+			{
+				"command": "carapace.convertRdfXml",
+				"title": "Convert RDF/XML to Turtle",
+				"category": "Carapace"
+			},
+			{
+				"command": "carapace.newSampleOntology",
+				"title": "New Sample Ontology",
+				"category": "Carapace"
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "carapace.showGraphToSide",
+					"when": "editorLangId == turtle && !notebookEditorFocused",
+					"group": "navigation"
+				},
+				{
+					"command": "carapace.find",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "navigation@1"
+				},
+				{
+					"command": "carapace.fitView",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "navigation@2"
+				},
+				{
+					"command": "carapace.relayout",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "navigation@3"
+				},
+				{
+					"command": "carapace.toggleSettings",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "navigation@4"
+				},
+				{
+					"command": "carapace.exportSvg",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "1_export@1"
+				},
+				{
+					"command": "carapace.exportPng",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "1_export@2"
+				},
+				{
+					"command": "carapace.toggleLock",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "2_layout@1"
+				},
+				{
+					"command": "carapace.clearSavedLayout",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "2_layout@2"
+				},
+				{
+					"command": "carapace.resetGraphSettings",
+					"when": "activeWebviewPanelId == carapace.graph",
+					"group": "2_layout@3"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "carapace.revealNodeAtCursor",
+					"when": "editorLangId == turtle",
+					"group": "navigation@90"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "carapace.showGraph",
+					"when": "resourceExtname == .ttl",
+					"group": "navigation@90"
+				},
+				{
+					"command": "carapace.convertRdfXml",
+					"when": "resourceExtname =~ /^\\.(rdf|owl|xml)$/",
+					"group": "navigation@91"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "carapace.showGraphToSide",
+					"when": "editorLangId == turtle"
+				},
+				{
+					"command": "carapace.showGraph",
+					"when": "editorLangId == turtle"
+				},
+				{
+					"command": "carapace.revealNodeAtCursor",
+					"when": "editorLangId == turtle"
+				},
+				{
+					"command": "carapace.fitView",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.relayout",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.toggleLock",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.find",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.toggleSettings",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.exportSvg",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.exportPng",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.resetGraphSettings",
+					"when": "carapace.graphOpen"
+				},
+				{
+					"command": "carapace.clearSavedLayout",
+					"when": "carapace.graphOpen"
+				}
+			]
+		},
+		"keybindings": [
+			{
+				"command": "carapace.showGraphToSide",
+				"key": "ctrl+k g",
+				"mac": "cmd+k g",
+				"when": "editorLangId == turtle"
+			},
+			{
+				"command": "carapace.revealNodeAtCursor",
+				"key": "ctrl+alt+g",
+				"mac": "cmd+alt+g",
+				"when": "editorTextFocus && editorLangId == turtle"
+			}
+		],
+		"configuration": {
+			"title": "Carapace",
+			"properties": {
+				"carapace.preview.updateDelay": {
+					"type": "number",
+					"default": 300,
+					"minimum": 0,
+					"description": "Delay in milliseconds before the graph reflects edits made in the editor."
+				},
+				"carapace.preview.followCursor": {
+					"type": "string",
+					"enum": [
+						"off",
+						"highlight",
+						"center"
+					],
+					"enumDescriptions": [
+						"Do not sync the editor cursor with the graph.",
+						"Select the node defined on the cursor line.",
+						"Select the node defined on the cursor line and pan the graph to it."
+					],
+					"default": "highlight",
+					"description": "How the graph follows the cursor in the Turtle editor."
+				},
+				"carapace.preview.revealLineOnNodeClick": {
+					"type": "boolean",
+					"default": true,
+					"description": "Clicking a node in the graph moves the editor to the line where it is defined."
+				},
+				"carapace.diagnostics.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Report Turtle syntax errors in the Problems panel."
+				},
+				"carapace.export.theme": {
+					"type": "string",
+					"enum": [
+						"light",
+						"current"
+					],
+					"default": "light",
+					"description": "Colour theme used when exporting the graph as SVG or PNG."
+				},
+				"carapace.graph.duplicateExternalNodes": {
+					"type": "boolean",
+					"default": false,
+					"description": "Default for new documents: draw externally defined nodes once per reference instead of sharing a single node."
+				},
+				"carapace.graph.hiddenEntityTypes": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"enum": [
+							"class",
+							"datatype",
+							"objectProperty",
+							"dataProperty",
+							"annotationProperty",
+							"instance",
+							"literal",
+							"blank",
+							"tripleTerm"
+						]
+					},
+					"default": [
+						"blank"
+					],
+					"description": "Default for new documents: entity types that are not drawn."
+				},
+				"carapace.graph.hiddenNamespaces": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+						"http://www.w3.org/2000/01/rdf-schema#",
+						"http://www.w3.org/2002/07/owl#"
+					],
+					"description": "Default for new documents: nodes whose IRI starts with one of these namespaces are hidden."
+				},
+				"carapace.graph.hiddenPredicates": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Default for new documents: objects of these predicate IRIs are hidden."
+				},
+				"carapace.graph.hiddenInstanceOf": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"http://www.w3.org/2002/07/owl#Ontology"
+					],
+					"description": "Default for new documents: nodes whose rdf:type is one of these IRIs are hidden."
+				},
+				"carapace.graph.nodeNamePredicate": {
+					"type": "string",
+					"default": "http://www.w3.org/2000/01/rdf-schema#label",
+					"description": "Default for new documents: nodes display the value of this predicate instead of their IRI local name. Empty to always show local names."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"build": "node esbuild.mjs",
+		"watch": "node esbuild.mjs --watch",
+		"package": "node esbuild.mjs --production && vsce package --no-dependencies",
+		"vscode:prepublish": "node esbuild.mjs --production",
+		"typecheck": "tsc -p . --noEmit",
+		"lint": "eslint src test",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "npm run test:unit && npm run test:webview",
+		"test:unit": "vitest run",
+		"test:webview": "node esbuild.mjs && playwright test",
+		"test:integration": "node esbuild.mjs && tsc -p test/integration && node out/test/integration/runTest.js",
+		"test:w3c": "node scripts/fetch-w3c-tests.mjs && W3C_RDF_TESTS=.w3c-rdf-tests vitest run test/unit/w3c-conformance.test.ts"
+	},
+	"dependencies": {
+		"d3-force": "^3.0.0",
+		"n3": "^2.13.10",
+		"rdfxml-streaming-parser": "^3.3.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.5",
+		"@playwright/test": "1.56.1",
+		"@types/d3-force": "^3.0.10",
+		"@types/mocha": "^10.0.10",
+		"@types/n3": "^1.26.4",
+		"@types/node": "^22.19.0",
+		"@types/vscode": "~1.95.0",
+		"@vscode/codicons": "^0.0.36",
+		"@vscode/test-electron": "^3.1.0",
+		"@vscode/vsce": "^4.0.0",
+		"esbuild": "^0.25.12",
+		"eslint": "^9.39.5",
+		"glob": "^11.0.3",
+		"mocha": "^12.0.3",
+		"prettier": "^3.6.2",
+		"typescript": "~5.9.3",
+		"typescript-eslint": "^8.71.1",
+		"vitest": "^3.2.4",
+		"vscode-oniguruma": "^2.0.1",
+		"vscode-textmate": "^9.3.2"
+	}
+}

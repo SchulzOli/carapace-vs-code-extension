@@ -1,0 +1,39 @@
+import type { EntityType } from "./types";
+
+// using list and not record here for use in svelte #each iteration
+export const ENTITY_TYPE_DISPLAY = [
+	{ type: "class", label: "Class" },
+	{ type: "datatype", label: "Datatype" },
+	{ type: "objectProperty", label: "Object Property" },
+	{ type: "dataProperty", label: "Data Property" },
+	{ type: "annotationProperty", label: "Annotation Property" },
+	{ type: "instance", label: "Instance" },
+	{ type: "literal", label: "Literal" },
+	{ type: "blank", label: "Blank" },
+	{ type: "tripleTerm", label: "Triple Term" }
+] as const satisfies readonly { type: EntityType; label: string }[];
+
+export const ENTITY_TYPE_LABELS: Record<EntityType, string> = Object.fromEntries(
+	ENTITY_TYPE_DISPLAY.map(({ type, label }) => [type, label.toUpperCase()])
+) as Record<EntityType, string>;
+
+export const ENTITY_TYPE_COLOURS: Record<EntityType, string> = {
+	class: "peach",
+	datatype: "green",
+	objectProperty: "lavender",
+	dataProperty: "teal",
+	annotationProperty: "sky",
+	instance: "blue",
+	literal: "overlay-0",
+	blank: "overlay-2",
+	list: "mauve",
+	tripleTerm: "flamingo"
+};
+
+export function entityTypeLabel(nodeType: EntityType, external: boolean): string {
+	return external ? `${ENTITY_TYPE_LABELS[nodeType]} (EX)` : ENTITY_TYPE_LABELS[nodeType];
+}
+
+export function entityTypeColour(nodeType: EntityType, external: boolean): string {
+	return external ? "yellow" : ENTITY_TYPE_COLOURS[nodeType];
+}

@@ -1,0 +1,5 @@
+@prefix ex: <http://example.org/broken#> .
+
+ex:Thing a ex:Class .
+ex:Other ex:relatesTo ;
+    ex:name "missing object above" .

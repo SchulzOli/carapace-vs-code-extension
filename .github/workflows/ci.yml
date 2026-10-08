@@ -1,0 +1,66 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    check:
+        name: Lint, unit & webview tests, package
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run typecheck
+            - run: npm run lint
+            - run: npm run format:check
+            - name: Fetch W3C Turtle 1.1/1.2 test suites
+              run: node scripts/fetch-w3c-tests.mjs
+            - name: Unit tests (incl. W3C Turtle conformance)
+              run: npm run test:unit
+              env:
+                  W3C_RDF_TESTS: .w3c-rdf-tests
+            - run: npx playwright install --with-deps chromium
+            - run: npm run test:webview
+            - name: Upload Playwright report
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report
+                  path: |
+                      playwright-report/
+                      test-results/
+            - run: npm run package
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: carapace-vscode-vsix
+                  path: "*.vsix"
+
+    integration:
+        name: VS Code integration tests (${{ matrix.os }})
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - name: Run integration tests
+              if: runner.os == 'Linux'
+              run: xvfb-run -a npm run test:integration
+            - name: Run integration tests
+              if: runner.os != 'Linux'
+              run: npm run test:integration

@@ -2,8 +2,10 @@ name: CI
 
 on:
     push:
+        branches: ["**"] # release tags are tested by the release workflow
     pull_request:
     workflow_dispatch:
+    workflow_call:
 
 permissions:
     contents: read

@@ -2,14 +2,16 @@ import type { Quad } from "n3";
 
 import { RDF_FIRST, RDF_NIL, RDF_REIFIES } from "./namespaces";
 import { BLANK_NODE_RADIUS, CANVAS_HEIGHT, CANVAS_WIDTH, COLLECTION_NODE_RADIUS } from "./visualisation";
-import type { CollectionType, Edge, EntityType, Node } from "./types";
+import type { CollectionType, Edge, EntityType, Node, StatementRole } from "./types";
 import type { CollectionDescriptor } from "./processor";
 import type { NodeDescriptor } from "./processor";
 import type { GraphSettings } from "./settings";
-import { measureBlankNodeDimensions, measureNodeDimensions } from "./layout";
+import { ENTITY_TYPE_COLOURS, entityTypeColour } from "./entity";
+import { measureBlankNodeDimensions, measureNodeDimensions, measureStatementCard } from "./layout";
+import type { StatementPart } from "./layout";
 import { classifyUriType, resolveLocalName, resolvePrefix } from "./ontology";
 import { inHiddenNamespace } from "./settings";
-import { formatTerm, isTripleTerm, tripleTermKey } from "./tripleTerms";
+import { formatTerm, isTripleTerm, literalParts, tripleTermKey } from "./tripleTerms";
 import type { RdfTerm } from "./tripleTerms";
 
 export class Builder {
@@ -444,16 +446,74 @@ export class Builder {
 		return node;
 	}
 
-	/** Links each triple term node to the nodes of its subject and object, where those are drawn. */
+	/**
+	 * Lays out each triple term node as a card with a subject, predicate and object row, and links the subject and
+	 * object rows to their nodes where those are drawn.
+	 */
 	private linkTripleTerms() {
 		for (const [key, term] of this.tripleTerms) {
 			const node = this.uriToNode.get(key);
 			if (!node) continue;
-			for (const part of [term.subject!, term.object!]) {
-				const target = this.findTermNode(part, term);
-				if (target && target !== node) this.addTermEdge(node, target);
-			}
+			const subject = this.findTermNode(term.subject!, term);
+			const object = this.findTermNode(term.object!, term);
+			const predicate =
+				this.uriToNode.get(this.resolveUriToStable(term.predicate!.value)) ??
+				this.uriToNode.get(term.predicate!.value);
+
+			const card = measureStatementCard([
+				this.statementPart("subject", term.subject!, subject),
+				this.statementPart("predicate", term.predicate!, predicate),
+				this.statementPart("object", term.object!, object)
+			]);
+			node.statement = card.rows;
+			node.width = card.width;
+			node.height = card.height;
+			node.bodyLines = [];
+
+			if (subject && subject !== node) this.addTermEdge(node, subject, "subject");
+			if (object && object !== node) this.addTermEdge(node, object, "object");
 		}
+	}
+
+	/**
+	 * What a card row shows: a literal's value with its datatype or language as a tag, the label of the part's node
+	 * where it is drawn, otherwise the part in Turtle form.
+	 */
+	private statementPart(role: StatementRole, part: RdfTerm, node: Node | undefined): StatementPart {
+		if (part.termType === "Literal") {
+			const { value, tag } = literalParts(part, this.namespacePrefixes);
+			return {
+				role,
+				prefix: null,
+				text: value,
+				tag,
+				colour: node ? entityTypeColour(node.nodeType, node.external) : ENTITY_TYPE_COLOURS.literal
+			};
+		}
+		if (part.termType === "Quad" || part.termType === "BlankNode") {
+			const type: EntityType = part.termType === "Quad" ? "tripleTerm" : "blank";
+			return {
+				role,
+				prefix: null,
+				text: formatTerm(part, this.namespacePrefixes),
+				colour: node ? entityTypeColour(node.nodeType, node.external) : ENTITY_TYPE_COLOURS[type]
+			};
+		}
+		if (node)
+			return {
+				role,
+				prefix: node.prefix,
+				text: node.label,
+				colour: entityTypeColour(node.nodeType, node.external)
+			};
+		const prefix = resolvePrefix(part.value, this.namespacePrefixes);
+		return {
+			role,
+			prefix: prefix || null,
+			// a badge for a named prefix, Turtle's own form for the empty prefix and for full IRIs
+			text: prefix ? resolveLocalName(part.value) : formatTerm(part, this.namespacePrefixes),
+			colour: null
+		};
 	}
 
 	private findTermNode(part: RdfTerm, term: RdfTerm): Node | undefined {
@@ -472,8 +532,8 @@ export class Builder {
 		}
 	}
 
-	private addTermEdge(source: Node, target: Node) {
-		const key = `term\u0000${source.uri}\u0000${target.uri}`;
+	private addTermEdge(source: Node, target: Node, role: StatementRole) {
+		const key = `term\u0000${role}\u0000${source.uri}\u0000${target.uri}`;
 		if (this.keyToEdge.has(key)) return;
 		const edge: Edge = {
 			id: `edge-${this.edges.length}`,
@@ -481,7 +541,8 @@ export class Builder {
 			target,
 			label: "",
 			collectionEdge: false,
-			termEdge: true
+			termEdge: true,
+			termRole: role
 		};
 		this.edges.push(edge);
 		this.keyToEdge.set(key, edge);

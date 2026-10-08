@@ -1,5 +1,5 @@
 import { entityTypeColour, entityTypeLabel } from "../core/entity";
-import { NODE_FONT_FAMILY, TEXT_VERTICAL_OFFSET_FACTOR } from "../core/layout";
+import { NODE_CONTENT_INSET, NODE_FONT_FAMILY, TEXT_VERTICAL_OFFSET_FACTOR } from "../core/layout";
 import type { Edge, Node } from "../core/types";
 import {
 	ARROW_INSET,
@@ -11,13 +11,18 @@ import {
 	NODE_BADGE_FONT_SIZE,
 	NODE_BADGE_PADDING_X,
 	NODE_BODY_FONT_SIZE,
-	NODE_BORDER_WIDTH,
-	NODE_CONTENT_PADDING_X,
 	NODE_CONTENT_PADDING_Y,
 	NODE_HEADER_FONT_SIZE,
 	NODE_HEADER_HEIGHT,
 	NODE_LABEL_GAP,
-	NODE_LINE_HEIGHT
+	NODE_LINE_HEIGHT,
+	STATEMENT_BAR_OFFSET_X,
+	STATEMENT_BAR_WIDTH,
+	STATEMENT_PORT_RADIUS,
+	STATEMENT_ROLE_FONT_SIZE,
+	STATEMENT_ROW_PADDING_Y,
+	STATEMENT_TAG_FONT_SIZE,
+	STATEMENT_TEXT_OFFSET_X
 } from "../core/visualisation";
 import { svg } from "./dom";
 
@@ -152,6 +157,7 @@ function nodeTitle(node: Node): string {
 	if (node.nodeType === "literal") return `"${node.label}"`;
 	if (node.collection) return `${node.collectionType ?? "list"} collection`;
 	if (node.blank) return "blank node";
+	if (node.statement) return node.label;
 	return node.uri.includes("|") ? node.uri.slice(node.uri.lastIndexOf("|") + 1) : node.uri;
 }
 
@@ -227,7 +233,7 @@ export function createNodeElement(node: Node): SVGGElement {
 			)
 		);
 	} else {
-		const contentInset = NODE_BORDER_WIDTH / 2 + NODE_CONTENT_PADDING_X / 2;
+		const contentInset = NODE_CONTENT_INSET;
 		const headerTextY = NODE_HEADER_HEIGHT / 2 + NODE_HEADER_FONT_SIZE * TEXT_VERTICAL_OFFSET_FACTOR;
 		const badgeHeight = NODE_BADGE_FONT_SIZE + 4;
 		const badgeY = NODE_HEADER_HEIGHT + NODE_CONTENT_PADDING_Y + (NODE_LINE_HEIGHT - badgeHeight) / 2;
@@ -262,6 +268,11 @@ export function createNodeElement(node: Node): SVGGElement {
 				[label]
 			)
 		);
+
+		if (node.statement) {
+			appendStatementRows(g, node);
+			return g;
+		}
 
 		if (node.prefix) {
 			g.append(
@@ -313,6 +324,117 @@ export function createNodeElement(node: Node): SVGGElement {
 	return g;
 }
 
+const ROLE_LETTERS = { subject: "S", predicate: "P", object: "O" } as const;
+
+/** Body of a triple term card: one row per part of the statement, see `measureStatementCard`. */
+function appendStatementRows(g: SVGGElement, node: Node) {
+	const textX = NODE_CONTENT_INSET + STATEMENT_TEXT_OFFSET_X;
+	const badgeHeight = NODE_BADGE_FONT_SIZE + 4;
+
+	node.statement!.forEach((row, i) => {
+		const top = row.y + STATEMENT_ROW_PADDING_Y;
+		const fill = row.colour ? `fill: var(--${row.colour});` : null;
+		if (i > 0) {
+			g.append(
+				svg("line", {
+					class: "statement-divider",
+					x1: NODE_CONTENT_INSET,
+					x2: node.width - NODE_CONTENT_INSET,
+					y1: row.y,
+					y2: row.y,
+					"pointer-events": "none"
+				})
+			);
+		}
+		g.append(
+			svg(
+				"text",
+				{
+					class: "statement-role",
+					x: NODE_CONTENT_INSET,
+					y: row.portY + STATEMENT_ROLE_FONT_SIZE * TEXT_VERTICAL_OFFSET_FACTOR,
+					"font-size": STATEMENT_ROLE_FONT_SIZE,
+					"font-weight": "bold",
+					"pointer-events": "none"
+				},
+				[ROLE_LETTERS[row.role]]
+			),
+			svg("rect", {
+				class: "statement-bar",
+				x: NODE_CONTENT_INSET + STATEMENT_BAR_OFFSET_X,
+				y: top + 1,
+				width: STATEMENT_BAR_WIDTH,
+				height: row.height - STATEMENT_ROW_PADDING_Y * 2 - 2,
+				rx: STATEMENT_BAR_WIDTH / 2,
+				style: fill,
+				"pointer-events": "none"
+			})
+		);
+
+		if (row.prefix) {
+			const badgeY = top + (NODE_LINE_HEIGHT - badgeHeight) / 2;
+			g.append(
+				svg("rect", {
+					class: "statement-badge",
+					x: textX,
+					y: badgeY,
+					width: row.badgeWidth,
+					height: badgeHeight,
+					rx: 3,
+					style: fill,
+					"pointer-events": "none"
+				}),
+				svg(
+					"text",
+					{
+						x: textX + NODE_BADGE_PADDING_X,
+						y: badgeY + badgeHeight / 2 + NODE_BADGE_FONT_SIZE * 0.35,
+						class: "node-badge-text",
+						"font-size": NODE_BADGE_FONT_SIZE,
+						"font-weight": 600,
+						"pointer-events": "none"
+					},
+					[row.prefix]
+				)
+			);
+		}
+
+		if (row.tag) {
+			g.append(
+				svg(
+					"text",
+					{
+						class: "statement-tag",
+						x: node.width - NODE_CONTENT_INSET,
+						y: top + NODE_LINE_HEIGHT / 2 + STATEMENT_TAG_FONT_SIZE * TEXT_VERTICAL_OFFSET_FACTOR,
+						"text-anchor": "end",
+						"font-size": STATEMENT_TAG_FONT_SIZE,
+						"pointer-events": "none"
+					},
+					[row.tag]
+				)
+			);
+		}
+
+		row.lines.forEach((line, j) => {
+			g.append(
+				svg(
+					"text",
+					{
+						x: j === 0 && row.prefix ? textX + row.badgeWidth + NODE_LABEL_GAP : textX,
+						y: top + (j + 0.5) * NODE_LINE_HEIGHT + NODE_BODY_FONT_SIZE * TEXT_VERTICAL_OFFSET_FACTOR,
+						class: "node-body-text",
+						"font-size": NODE_BODY_FONT_SIZE,
+						"font-style": row.role === "predicate" ? "italic" : null,
+						"pointer-events": "none"
+					},
+					[line]
+				)
+			);
+		});
+	});
+}
+
 function collectionIcon(node: Node, cx: number, cy: number): SVGGElement {
 	const g = svg("g", { transform: `translate(${cx}, ${cy})`, "pointer-events": "none", class: "collection-icon" });
 	const common = { fill: "none", "stroke-width": 2 };
@@ -345,6 +467,46 @@ function arrowHead(tipX: number, tipY: number, ux: number, uy: number) {
 	return `${tipX},${tipY} ${bx1},${by1} ${bx2},${by2}`;
 }
 
+/** Point where the ray from the centre of `node` in direction (ux, uy) leaves its box. */
+function boxExit(node: Node, ux: number, uy: number) {
+	const t = Math.min(node.width / 2 / (Math.abs(ux) || 0.001), node.height / 2 / (Math.abs(uy) || 0.001));
+	return { x: node.x + node.width / 2 + ux * t, y: node.y + node.height / 2 + uy * t };
+}
+
+/**
+ * Curve from the subject or object row of a triple term card to that part's node. It leaves the card sideways
+ * at the row, from the side facing the node, and enters the node pointing at the card.
+ */
+function appendStatementConnector(g: SVGGElement, edge: Edge, strokeWidth: number): boolean {
+	const { source, target } = edge;
+	const row = source.statement?.find((r) => r.role === edge.termRole);
+	if (!row) return false;
+
+	const targetX = target.x + target.width / 2;
+	const targetY = target.y + target.height / 2;
+	const side = targetX >= source.x + source.width / 2 ? 1 : -1;
+	const portX = (side > 0 ? source.x + source.width : source.x) + side * STATEMENT_PORT_RADIUS;
+	const portY = source.y + row.portY;
+	const startX = portX + side * STATEMENT_PORT_RADIUS;
+
+	const reach = Math.min(80, Math.max(30, Math.abs(targetX - startX) * 0.5));
+	const c1x = startX + side * reach;
+	const { ux, uy } = normalise(c1x - targetX, portY - targetY);
+	const end = boxExit(target, ux, uy);
+	const pull = Math.min(40, Math.hypot(end.x - startX, end.y - portY) * 0.3);
+
+	g.append(
+		svg("path", {
+			class: "edge-line",
+			d: `M ${startX} ${portY} C ${c1x} ${portY}, ${end.x + ux * pull} ${end.y + uy * pull}, ${end.x} ${end.y}`,
+			"stroke-width": strokeWidth,
+			fill: "none"
+		}),
+		svg("circle", { class: "term-port", cx: portX, cy: portY, r: STATEMENT_PORT_RADIUS })
+	);
+	return true;
+}
+
 export function createEdgeElement(edge: Edge, highlighted: boolean): SVGGElement {
 	const { source, target } = edge;
 	const g = svg("g", {
@@ -352,6 +514,7 @@ export function createEdgeElement(edge: Edge, highlighted: boolean): SVGGElement
 		"data-id": edge.id
 	});
 	const strokeWidth = highlighted ? 3 : 1.5;
+	if (edge.termEdge && appendStatementConnector(g, edge, strokeWidth)) return g;
 
 	let labelX: number;
 	let labelY: number;

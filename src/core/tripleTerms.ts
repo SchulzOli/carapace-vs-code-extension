@@ -79,3 +79,17 @@ export function formatTerm(term: RdfTerm, prefixes: Record<string, string>): str
 			return shortIri(term.value, prefixes);
 	}
 }
+
+/**
+ * A literal split for display: its value as written, and its language (`@en`) or datatype (`zoo:Age`) as a tag.
+ * Plain strings and literals Turtle writes without a datatype (`42`, `true`) get no tag.
+ */
+export function literalParts(term: RdfTerm, prefixes: Record<string, string>): { value: string; tag: string | null } {
+	if (term.language)
+		return { value: term.value, tag: `@${term.language}${term.direction ? `--${term.direction}` : ""}` };
+	const datatype = term.datatype?.value ?? XSD_NS + "string";
+	if (datatype === XSD_NS + "string" || SHORTHAND_LITERALS.get(datatype)?.test(term.value)) {
+		return { value: term.value, tag: null };
+	}
+	return { value: term.value, tag: shortIri(datatype, prefixes) };
+}

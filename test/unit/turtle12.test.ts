@@ -186,6 +186,48 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 			expect(termEdges.every((e) => e.label === "" && e.source.nodeType === "tripleTerm")).toBe(true);
 		});
 
+		it("lays out triple terms as cards with a subject, predicate and object row", () => {
+			const { nodes, edges } = graph();
+			const statement = nodes.find((n) => n.label === "<<( :alice :age 42 )>>")!;
+			const rows = statement.statement!;
+			expect(rows.map((r) => r.role)).toEqual(["subject", "predicate", "object"]);
+			// parts with a node show its label and colour, others their Turtle form
+			expect(rows.map((r) => r.lines.join(" "))).toEqual(["alice", ":age", "42"]);
+			expect(rows.map((r) => r.colour)).toEqual(["blue", null, "overlay-0"]);
+			// rows stack below the header and the card grows to hold them
+			expect(rows[1].y).toBe(rows[0].y + rows[0].height);
+			expect(statement.height).toBeGreaterThan(rows[2].y + rows[2].height);
+			expect(rows.every((r) => r.portY > r.y && r.portY < r.y + r.height)).toBe(true);
+
+			// each connector starts at the row of the part it links to
+			const roles = edges
+				.filter((e) => e.source === statement && e.termEdge)
+				.map((e) => [e.termRole, e.target.label]);
+			expect(roles).toEqual([
+				["subject", "alice"],
+				["object", "42"]
+			]);
+		});
+
+		it("shows a literal's value on the card with its datatype or language as a tag", () => {
+			const analysis = analyseTurtle(`PREFIX : <http://example/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+:a :p <<( :shelly :age "112"^^:Age )>>, <<( :shelly :name "Shelly"@en )>>, <<( :shelly :legs 4 )>>,
+	<<( :shelly :born "1912-01-01"^^xsd:date )>>, <<( :shelly :motto "slow" )>> .`);
+			const { nodes } = buildGraph(analysis.triples, defaultGraphSettings(), [], analysis.prefixMap);
+			const objects = nodes
+				.filter((n) => n.statement)
+				.map((n) => n.statement![2])
+				.map((row) => [row.lines.join(" "), row.tag]);
+			expect(objects).toEqual([
+				["112", ":Age"],
+				["Shelly", "@en"],
+				["4", null],
+				["1912-01-01", "xsd:date"],
+				["slow", null]
+			]);
+		});
+
 		it("classifies named reifiers as instances unless they are typed", () => {
 			const { nodes } = graph();
 			expect(nodes.find((n) => n.uri === EX + "ageClaim")?.nodeType).toBe("instance");

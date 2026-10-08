@@ -1,10 +1,12 @@
 name: Release
 
 # Publishes the extension when a version tag (v1.2.3) is pushed, after the full CI suite has passed:
-#   1. VS Code Marketplace (needs the VSCE_PAT secret)
+#   1. VS Code Marketplace — signs in with Microsoft Entra ID via GitHub OIDC (no stored secret), see docs/RELEASING.md.
+#      A VSCE_PAT secret still works as a fallback.
 #   2. Open VSX, used by VSCodium, Cursor, Gitpod, ... (optional, needs the OVSX_PAT secret)
 #   3. a GitHub Release with the .vsix attached
-# It can also be started by hand from the Actions tab, e.g. as a dry run that only builds the .vsix.
+# It can also be started by hand from the Actions tab: as a dry run that builds the .vsix and checks Marketplace
+# access, or to print the identity that has to be added to the Marketplace publisher (one-time setup).
 
 on:
     push:
@@ -12,11 +14,15 @@ on:
     workflow_dispatch:
         inputs:
             dry-run:
-                description: "Only build and upload the .vsix, publish nothing"
+                description: "Only build the .vsix and check Marketplace access, publish nothing"
                 type: boolean
                 default: true
             pre-release:
                 description: "Publish as a pre-release version"
+                type: boolean
+                default: false
+            show-marketplace-identity:
+                description: "Setup helper: print the ID to add as a member of the Marketplace publisher, then stop"
                 type: boolean
                 default: false
 
@@ -28,75 +34,141 @@ permissions:
     contents: read
 
 jobs:
+    identity:
+        name: Show Marketplace identity
+        if: github.event_name == 'workflow_dispatch' && inputs.show-marketplace-identity
+        runs-on: ubuntu-24.04
+        environment: marketplace
+        permissions:
+            id-token: write # sign in to Microsoft Entra ID with GitHub's OIDC token
+        steps:
+            - uses: azure/login@v3
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}
+                  allow-no-subscriptions: true
+            - name: Print the Azure DevOps identity of the app
+              run: |
+                  # 499b84ac-… is the resource ID of Azure DevOps / the Visual Studio Marketplace
+                  id=$(az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me \
+                    --resource 499b84ac-1321-427f-aa17-267ca6975798 --query id -o tsv)
+                  echo "Add this ID as a member (role: Contributor) of your Marketplace publisher: $id"
+                  {
+                    echo "### Marketplace publisher member ID"
+                    echo
+                    echo "Add \`$id\` as a member with the **Contributor** role at"
+                    echo "https://marketplace.visualstudio.com/manage → your publisher → **Members**."
+                  } >> "$GITHUB_STEP_SUMMARY"
+
     ci:
         name: CI
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.show-marketplace-identity) }}
         uses: ./.github/workflows/ci.yml
 
     publish:
         name: Package & publish
         needs: ci
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         environment: marketplace
         permissions:
             contents: write # create the GitHub Release
+            id-token: write # sign in to Microsoft Entra ID with GitHub's OIDC token
         env:
             DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
             PRE_RELEASE_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.pre-release && '--pre-release' || '' }}
+            AZ_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
             VSCE_PAT: ${{ secrets.VSCE_PAT }}
             OVSX_PAT: ${{ secrets.OVSX_PAT }}
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@v7
               with:
                   node-version: 22
-                  cache: npm
+                  # no dependency cache in the job that can publish (avoids cache poisoning)
+                  package-manager-cache: false
             - run: npm ci
 
             - name: Check version
               id: version
               run: |
                   version=$(node -p "require('./package.json').version")
-                  echo "version=$version" >> "$GITHUB_OUTPUT"
+                  publisher=$(node -p "require('./package.json').publisher")
+                  {
+                    echo "version=$version"
+                    echo "publisher=$publisher"
+                    echo "vsix=carapace-turtle-vscode-$version.vsix"
+                  } >> "$GITHUB_OUTPUT"
                   if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
                     echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version. Bump it with 'npm version'."
                     exit 1
                   fi
 
             - name: Package
-              run: npx vsce package --no-dependencies $PRE_RELEASE_FLAG --out "carapace-turtle-vscode-${{ steps.version.outputs.version }}.vsix"
+              env:
+                  VSIX: ${{ steps.version.outputs.vsix }}
+              run: npx vsce package --no-dependencies ${PRE_RELEASE_FLAG:+"$PRE_RELEASE_FLAG"} --out "$VSIX"
 
-            - uses: actions/upload-artifact@v4
+            - uses: actions/upload-artifact@v7
               with:
                   name: carapace-turtle-vscode-${{ steps.version.outputs.version }}
-                  path: "*.vsix"
+                  path: ${{ steps.version.outputs.vsix }}
+
+            - name: Sign in to Microsoft Entra ID
+              if: env.AZ_CLIENT_ID != ''
+              uses: azure/login@v3
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}
+                  allow-no-subscriptions: true
+
+            - name: Check Marketplace access
+              id: auth
+              env:
+                  PUBLISHER: ${{ steps.version.outputs.publisher }}
+              run: |
+                  if [[ -n "$AZ_CLIENT_ID" ]]; then
+                    echo "flag=--azure-credential" >> "$GITHUB_OUTPUT"
+                    npx vsce verify-pat --azure-credential "$PUBLISHER"
+                  elif [[ -n "$VSCE_PAT" ]]; then
+                    echo "::warning::Publishing with the VSCE_PAT secret. Global PATs stop working on 1 December 2026; switch to Microsoft Entra ID (docs/RELEASING.md)."
+                    npx vsce verify-pat "$PUBLISHER"
+                  elif [[ "$DRY_RUN" == "true" ]]; then
+                    echo "::notice::No Marketplace credentials configured yet; skipping the access check."
+                  else
+                    echo "::error::No Marketplace credentials. Set the AZURE_CLIENT_ID and AZURE_TENANT_ID variables (or a VSCE_PAT secret) in Settings → Environments → marketplace. See docs/RELEASING.md."
+                    exit 1
+                  fi
 
             - name: Publish to the VS Code Marketplace
               if: env.DRY_RUN != 'true'
-              run: |
-                  if [[ -z "$VSCE_PAT" ]]; then
-                    echo "::error::The VSCE_PAT secret is not set (Settings → Environments → marketplace). See the Releasing section of the README."
-                    exit 1
-                  fi
-                  npx vsce publish --packagePath *.vsix --skip-duplicate $PRE_RELEASE_FLAG
+              env:
+                  VSIX: ${{ steps.version.outputs.vsix }}
+                  AUTH_FLAG: ${{ steps.auth.outputs.flag }}
+              run: npx vsce publish --packagePath "$VSIX" --skip-duplicate ${PRE_RELEASE_FLAG:+"$PRE_RELEASE_FLAG"} ${AUTH_FLAG:+"$AUTH_FLAG"}
 
             - name: Publish to Open VSX
               if: env.DRY_RUN != 'true'
+              env:
+                  VSIX: ${{ steps.version.outputs.vsix }}
               run: |
                   if [[ -z "$OVSX_PAT" ]]; then
                     echo "::notice::OVSX_PAT is not set, skipping Open VSX."
                     exit 0
                   fi
-                  npx ovsx publish --packagePath *.vsix --skip-duplicate $PRE_RELEASE_FLAG
+                  npx ovsx publish --packagePath "$VSIX" --skip-duplicate ${PRE_RELEASE_FLAG:+"$PRE_RELEASE_FLAG"}
 
             - name: Create GitHub Release
               if: env.DRY_RUN != 'true'
               env:
                   GH_TOKEN: ${{ github.token }}
                   TAG: v${{ steps.version.outputs.version }}
+                  VSIX: ${{ steps.version.outputs.vsix }}
               run: |
                   if gh release view "$TAG" >/dev/null 2>&1; then
-                    gh release upload "$TAG" *.vsix --clobber
+                    gh release upload "$TAG" "$VSIX" --clobber
                   else
-                    gh release create "$TAG" *.vsix --target "$GITHUB_SHA" --title "$TAG" --generate-notes \
+                    gh release create "$TAG" "$VSIX" --target "$GITHUB_SHA" --title "$TAG" --generate-notes \
                       ${PRE_RELEASE_FLAG:+--prerelease}
                   fi

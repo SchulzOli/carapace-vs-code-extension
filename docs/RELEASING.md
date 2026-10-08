@@ -16,14 +16,43 @@ Re-running a release is safe: versions that are already published are skipped.
 1. Sign in to <https://marketplace.visualstudio.com/manage> with a Microsoft account and create a publisher.
 2. The publisher **ID** must equal the `publisher` field in [`package.json`](../package.json), currently `schulzoli`. If you pick a different ID, change that field to match.
 
-### 2. Marketplace access token → `VSCE_PAT` (required)
+### 2. Let GitHub sign in to the Marketplace (required): Microsoft Entra ID, no token
 
-1. Go to Azure DevOps (<https://dev.azure.com>) with the same Microsoft account. Create an organization if you have none; any name works.
-2. Open _User settings → Personal access tokens → New Token_ and set:
-    - **Organization:** _All accessible organizations_. A token limited to one organization does not work for publishing.
-    - **Scopes:** _Custom defined → Marketplace → **Manage**_.
-    - **Expiration:** up to one year. Put a reminder in your calendar to renew it.
-3. In this repository, open _Settings → Environments → **marketplace**_ (create it if it does not exist yet) and add an environment secret named **`VSCE_PAT`** with the token.
+The workflow signs in to the Marketplace with **Microsoft Entra ID through GitHub's OIDC token**. No secret is stored, and nothing expires. Personal access tokens scoped to "all accessible organizations" stop working on **1 December 2026**, so this replaces the `VSCE_PAT` token.
+
+1. **Create an app registration.** Open the Azure portal (<https://portal.azure.com>) with the same Microsoft account, then _Microsoft Entra ID → App registrations → New registration_.
+    - Name: e.g. `carapace-turtle-release`.
+    - Account types: _Single tenant_.
+    - No redirect URI.
+
+    No Azure subscription is needed. From its _Overview_ page, note the **Application (client) ID** and the **Directory (tenant) ID**.
+
+2. **Trust this repository.** In the app registration, open _Certificates & secrets → Federated credentials → Add credential_ and choose the scenario _GitHub Actions deploying Azure resources_:
+    - Organization: `SchulzOli`
+    - Repository: `carapace-vs-code-extension`
+    - Entity type: **Environment**, environment name: **`marketplace`**
+    - Name: e.g. `github-release`
+3. **Store the IDs in GitHub.** In this repository, open _Settings → Environments → **marketplace**_ (create it if it does not exist yet). Add two environment **variables**, not secrets, because these IDs are not confidential:
+    - `AZURE_CLIENT_ID`: the Application (client) ID
+    - `AZURE_TENANT_ID`: the Directory (tenant) ID
+4. **Get the app's Marketplace ID.** Open _Actions → Release → Run workflow_ and tick only **"Setup helper: print the ID …"**. The run's summary shows an ID.
+5. **Allow the app to publish.** At <https://marketplace.visualstudio.com/manage>, open your publisher → _Members → Add_. Paste that ID and give it the **Contributor** role.
+6. **Check it.** Run _Actions → Release → Run workflow_ as a **dry run**. The step _Check Marketplace access_ must pass. It verifies that the app may publish to the publisher, without publishing anything.
+
+<details>
+<summary>Fallback: a personal access token (until 1 December 2026)</summary>
+
+If the variables above are not set, the workflow falls back to an environment secret **`VSCE_PAT`** and prints a warning.
+
+To create one:
+
+1. At <https://dev.azure.com>, go to _User settings → Personal access tokens → New Token_.
+2. Set _Organization: All accessible organizations_.
+3. Set _Scopes: Custom defined → Marketplace → Manage_.
+
+Global tokens like this can no longer be used after 1 December 2026.
+
+</details>
 
 ### 3. Open VSX (optional, for VSCodium, Cursor, Gitpod, Eclipse Theia, …)
 
@@ -58,5 +87,5 @@ The tag must match the version in `package.json`, otherwise the workflow stops b
 
 From _Actions → Release → Run workflow_ you can:
 
-- **Dry run** (the default): run CI and build the `.vsix` as a downloadable artifact, without publishing anything. Use it to check a release before tagging.
+- **Dry run** (the default): run CI, build the `.vsix` as a downloadable artifact and check Marketplace access, without publishing anything. Use it to check a release before tagging.
 - **Pre-release**: publish to the Marketplace's pre-release channel. Users opt in with _Switch to Pre-Release Version_. The Marketplace has no `-beta`-style versions. A common convention is to use odd minor versions (`0.3.x`) for pre-releases and even ones for stable releases.

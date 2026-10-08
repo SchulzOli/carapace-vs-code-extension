@@ -2,7 +2,7 @@
 	"name": "carapace-turtle-vscode",
 	"displayName": "Carapace Turtle — TTL & OWL Graph Visualiser",
 	"description": "Live OWL-aware graph visualisation for Turtle (TTL) ontologies, right next to your editor. A VS Code port of Carapace.",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"publisher": "schulzoli",
 	"license": "GPL-3.0-or-later",
 	"icon": "media/icon.png",

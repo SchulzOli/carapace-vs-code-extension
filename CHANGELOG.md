@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-10-08
 
+- Renamed to **Carapace Turtle** with the extension ID `carapace-turtle-vscode`, because the previous Marketplace name was taken.
 - Turtle 1.2 graphs:
     - Annotations (`{| … |}`) are now visible by default, drawn on the triple term they describe. Before, they were hidden along with blank nodes.
     - Triple terms are linked to their subject and object nodes with dashed lines.

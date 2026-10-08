@@ -3,7 +3,7 @@ import type * as vscode from "vscode";
 import { normaliseGraphSettings } from "../core/settings";
 import type { PersistedGraphState } from "../shared/protocol";
 
-const PREFIX = "carapace.graphState:";
+const PREFIX = "terrapin.graphState:";
 
 /** Persists per-document graph state (layout, camera, settings, lock) in the workspace state. */
 export class GraphStateStore {

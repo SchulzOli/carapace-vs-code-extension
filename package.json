@@ -1,7 +1,7 @@
 {
-	"name": "carapace-vscode",
-	"displayName": "Carapace — Turtle Graph Visualiser",
-	"description": "Live OWL-aware graph visualisation for Turtle (TTL) ontologies, right next to your editor. A VS Code port of Carapace.",
+	"name": "terrapin-turtle-graph",
+	"displayName": "Terrapin — Turtle & OWL Graph Visualiser",
+	"description": "Live, OWL-aware graph visualisation for Turtle (TTL) 1.1/1.2 ontologies right next to your editor. Based on the Carapace web app.",
 	"version": "0.1.0",
 	"publisher": "schulzoli",
 	"license": "GPL-3.0-or-later",
@@ -34,7 +34,7 @@
 	"main": "./dist/extension.js",
 	"activationEvents": [
 		"onLanguage:turtle",
-		"onWebviewPanel:carapace.graph"
+		"onWebviewPanel:terrapin.graph"
 	],
 	"contributes": {
 		"languages": [
@@ -63,230 +63,230 @@
 		],
 		"commands": [
 			{
-				"command": "carapace.showGraphToSide",
+				"command": "terrapin.showGraphToSide",
 				"title": "Open Graph to the Side",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(type-hierarchy-sub)"
 			},
 			{
-				"command": "carapace.showGraph",
+				"command": "terrapin.showGraph",
 				"title": "Open Graph",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(type-hierarchy-sub)"
 			},
 			{
-				"command": "carapace.revealNodeAtCursor",
+				"command": "terrapin.revealNodeAtCursor",
 				"title": "Reveal Node at Cursor in Graph",
-				"category": "Carapace"
+				"category": "Terrapin"
 			},
 			{
-				"command": "carapace.fitView",
+				"command": "terrapin.fitView",
 				"title": "Fit Graph to View",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(screen-full)"
 			},
 			{
-				"command": "carapace.relayout",
+				"command": "terrapin.relayout",
 				"title": "Re-run Graph Layout",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(refresh)"
 			},
 			{
-				"command": "carapace.toggleLock",
+				"command": "terrapin.toggleLock",
 				"title": "Toggle Graph Lock",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(lock)"
 			},
 			{
-				"command": "carapace.find",
+				"command": "terrapin.find",
 				"title": "Search Graph",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(search)"
 			},
 			{
-				"command": "carapace.toggleSettings",
+				"command": "terrapin.toggleSettings",
 				"title": "Graph Settings",
-				"category": "Carapace",
+				"category": "Terrapin",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "carapace.exportSvg",
+				"command": "terrapin.exportSvg",
 				"title": "Export Graph as SVG",
-				"category": "Carapace"
+				"category": "Terrapin"
 			},
 			{
-				"command": "carapace.exportPng",
+				"command": "terrapin.exportPng",
 				"title": "Export Graph as PNG",
-				"category": "Carapace"
+				"category": "Terrapin"
 			},
 			{
-				"command": "carapace.resetGraphSettings",
+				"command": "terrapin.resetGraphSettings",
 				"title": "Reset Graph Settings for Document",
-				"category": "Carapace"
+				"category": "Terrapin"
 			},
 			{
-				"command": "carapace.clearSavedLayout",
+				"command": "terrapin.clearSavedLayout",
 				"title": "Forget Saved Layout for Document",
-				"category": "Carapace"
+				"category": "Terrapin"
 			},
 			{
-				"command": "carapace.convertRdfXml",
+				"command": "terrapin.convertRdfXml",
 				"title": "Convert RDF/XML to Turtle",
-				"category": "Carapace"
+				"category": "Terrapin"
 			},
 			{
-				"command": "carapace.newSampleOntology",
+				"command": "terrapin.newSampleOntology",
 				"title": "New Sample Ontology",
-				"category": "Carapace"
+				"category": "Terrapin"
 			}
 		],
 		"menus": {
 			"editor/title": [
 				{
-					"command": "carapace.showGraphToSide",
+					"command": "terrapin.showGraphToSide",
 					"when": "editorLangId == turtle && !notebookEditorFocused",
 					"group": "navigation"
 				},
 				{
-					"command": "carapace.find",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.find",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "navigation@1"
 				},
 				{
-					"command": "carapace.fitView",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.fitView",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "navigation@2"
 				},
 				{
-					"command": "carapace.relayout",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.relayout",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "navigation@3"
 				},
 				{
-					"command": "carapace.toggleSettings",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.toggleSettings",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "navigation@4"
 				},
 				{
-					"command": "carapace.exportSvg",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.exportSvg",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "1_export@1"
 				},
 				{
-					"command": "carapace.exportPng",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.exportPng",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "1_export@2"
 				},
 				{
-					"command": "carapace.toggleLock",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.toggleLock",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "2_layout@1"
 				},
 				{
-					"command": "carapace.clearSavedLayout",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.clearSavedLayout",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "2_layout@2"
 				},
 				{
-					"command": "carapace.resetGraphSettings",
-					"when": "activeWebviewPanelId == carapace.graph",
+					"command": "terrapin.resetGraphSettings",
+					"when": "activeWebviewPanelId == terrapin.graph",
 					"group": "2_layout@3"
 				}
 			],
 			"editor/context": [
 				{
-					"command": "carapace.revealNodeAtCursor",
+					"command": "terrapin.revealNodeAtCursor",
 					"when": "editorLangId == turtle",
 					"group": "navigation@90"
 				}
 			],
 			"explorer/context": [
 				{
-					"command": "carapace.showGraph",
+					"command": "terrapin.showGraph",
 					"when": "resourceExtname == .ttl",
 					"group": "navigation@90"
 				},
 				{
-					"command": "carapace.convertRdfXml",
+					"command": "terrapin.convertRdfXml",
 					"when": "resourceExtname =~ /^\\.(rdf|owl|xml)$/",
 					"group": "navigation@91"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "carapace.showGraphToSide",
+					"command": "terrapin.showGraphToSide",
 					"when": "editorLangId == turtle"
 				},
 				{
-					"command": "carapace.showGraph",
+					"command": "terrapin.showGraph",
 					"when": "editorLangId == turtle"
 				},
 				{
-					"command": "carapace.revealNodeAtCursor",
+					"command": "terrapin.revealNodeAtCursor",
 					"when": "editorLangId == turtle"
 				},
 				{
-					"command": "carapace.fitView",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.fitView",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.relayout",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.relayout",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.toggleLock",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.toggleLock",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.find",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.find",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.toggleSettings",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.toggleSettings",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.exportSvg",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.exportSvg",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.exportPng",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.exportPng",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.resetGraphSettings",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.resetGraphSettings",
+					"when": "terrapin.graphOpen"
 				},
 				{
-					"command": "carapace.clearSavedLayout",
-					"when": "carapace.graphOpen"
+					"command": "terrapin.clearSavedLayout",
+					"when": "terrapin.graphOpen"
 				}
 			]
 		},
 		"keybindings": [
 			{
-				"command": "carapace.showGraphToSide",
+				"command": "terrapin.showGraphToSide",
 				"key": "ctrl+k g",
 				"mac": "cmd+k g",
 				"when": "editorLangId == turtle"
 			},
 			{
-				"command": "carapace.revealNodeAtCursor",
+				"command": "terrapin.revealNodeAtCursor",
 				"key": "ctrl+alt+g",
 				"mac": "cmd+alt+g",
 				"when": "editorTextFocus && editorLangId == turtle"
 			}
 		],
 		"configuration": {
-			"title": "Carapace",
+			"title": "Terrapin",
 			"properties": {
-				"carapace.preview.updateDelay": {
+				"terrapin.preview.updateDelay": {
 					"type": "number",
 					"default": 300,
 					"minimum": 0,
 					"description": "Delay in milliseconds before the graph reflects edits made in the editor."
 				},
-				"carapace.preview.followCursor": {
+				"terrapin.preview.followCursor": {
 					"type": "string",
 					"enum": [
 						"off",
@@ -301,17 +301,17 @@
 					"default": "highlight",
 					"description": "How the graph follows the cursor in the Turtle editor."
 				},
-				"carapace.preview.revealLineOnNodeClick": {
+				"terrapin.preview.revealLineOnNodeClick": {
 					"type": "boolean",
 					"default": true,
 					"description": "Clicking a node in the graph moves the editor to the line where it is defined."
 				},
-				"carapace.diagnostics.enabled": {
+				"terrapin.diagnostics.enabled": {
 					"type": "boolean",
 					"default": true,
 					"description": "Report Turtle syntax errors in the Problems panel."
 				},
-				"carapace.export.theme": {
+				"terrapin.export.theme": {
 					"type": "string",
 					"enum": [
 						"light",
@@ -320,12 +320,12 @@
 					"default": "light",
 					"description": "Colour theme used when exporting the graph as SVG or PNG."
 				},
-				"carapace.graph.duplicateExternalNodes": {
+				"terrapin.graph.duplicateExternalNodes": {
 					"type": "boolean",
 					"default": false,
 					"description": "Default for new documents: draw externally defined nodes once per reference instead of sharing a single node."
 				},
-				"carapace.graph.hiddenEntityTypes": {
+				"terrapin.graph.hiddenEntityTypes": {
 					"type": "array",
 					"items": {
 						"type": "string",
@@ -346,7 +346,7 @@
 					],
 					"description": "Default for new documents: entity types that are not drawn."
 				},
-				"carapace.graph.hiddenNamespaces": {
+				"terrapin.graph.hiddenNamespaces": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -358,7 +358,7 @@
 					],
 					"description": "Default for new documents: nodes whose IRI starts with one of these namespaces are hidden."
 				},
-				"carapace.graph.hiddenPredicates": {
+				"terrapin.graph.hiddenPredicates": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -366,7 +366,7 @@
 					"default": [],
 					"description": "Default for new documents: objects of these predicate IRIs are hidden."
 				},
-				"carapace.graph.hiddenInstanceOf": {
+				"terrapin.graph.hiddenInstanceOf": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -376,7 +376,7 @@
 					],
 					"description": "Default for new documents: nodes whose rdf:type is one of these IRIs are hidden."
 				},
-				"carapace.graph.nodeNamePredicate": {
+				"terrapin.graph.nodeNamePredicate": {
 					"type": "string",
 					"default": "http://www.w3.org/2000/01/rdf-schema#label",
 					"description": "Default for new documents: nodes display the value of this predicate instead of their IRI local name. Empty to always show local names."

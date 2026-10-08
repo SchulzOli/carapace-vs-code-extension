@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const showGraph = (toSide: boolean) => (arg?: unknown) => {
 		const uri = resolveTargetUri(manager, arg);
 		if (!uri) {
-			void vscode.window.showInformationMessage("Carapace: open a Turtle (.ttl) file to show its graph.");
+			void vscode.window.showInformationMessage("Terrapin: open a Turtle (.ttl) file to show its graph.");
 			return;
 		}
 		const column = toSide
@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const forwardToGraph = (command: GraphCommand) => () => {
 		const panel = manager.target();
 		if (!panel) {
-			void vscode.window.showInformationMessage("Carapace: no graph is open.");
+			void vscode.window.showInformationMessage("Terrapin: no graph is open.");
 			return;
 		}
 		// commands that move keyboard focus into the graph need the panel to be focused
@@ -52,24 +52,24 @@ export function activate(context: vscode.ExtensionContext) {
 		new TurtleDiagnostics(cache),
 		features.register(),
 
-		vscode.commands.registerCommand("carapace.showGraph", showGraph(false)),
-		vscode.commands.registerCommand("carapace.showGraphToSide", showGraph(true)),
-		vscode.commands.registerCommand("carapace.fitView", forwardToGraph("fit")),
-		vscode.commands.registerCommand("carapace.relayout", forwardToGraph("relayout")),
-		vscode.commands.registerCommand("carapace.toggleLock", forwardToGraph("toggleLock")),
-		vscode.commands.registerCommand("carapace.find", forwardToGraph("find")),
-		vscode.commands.registerCommand("carapace.toggleSettings", forwardToGraph("toggleSettings")),
-		vscode.commands.registerCommand("carapace.exportSvg", forwardToGraph("exportSvg")),
-		vscode.commands.registerCommand("carapace.exportPng", forwardToGraph("exportPng")),
-		vscode.commands.registerCommand("carapace.resetGraphSettings", forwardToGraph("resetSettings")),
-		vscode.commands.registerCommand("carapace.clearSavedLayout", async () => {
+		vscode.commands.registerCommand("terrapin.showGraph", showGraph(false)),
+		vscode.commands.registerCommand("terrapin.showGraphToSide", showGraph(true)),
+		vscode.commands.registerCommand("terrapin.fitView", forwardToGraph("fit")),
+		vscode.commands.registerCommand("terrapin.relayout", forwardToGraph("relayout")),
+		vscode.commands.registerCommand("terrapin.toggleLock", forwardToGraph("toggleLock")),
+		vscode.commands.registerCommand("terrapin.find", forwardToGraph("find")),
+		vscode.commands.registerCommand("terrapin.toggleSettings", forwardToGraph("toggleSettings")),
+		vscode.commands.registerCommand("terrapin.exportSvg", forwardToGraph("exportSvg")),
+		vscode.commands.registerCommand("terrapin.exportPng", forwardToGraph("exportPng")),
+		vscode.commands.registerCommand("terrapin.resetGraphSettings", forwardToGraph("resetSettings")),
+		vscode.commands.registerCommand("terrapin.clearSavedLayout", async () => {
 			const panel = manager.target();
 			if (!panel) return;
 			await store.delete(panel.documentUri);
 			panel.runCommand("clearLayout");
 		}),
 
-		vscode.commands.registerCommand("carapace.revealNodeAtCursor", async () => {
+		vscode.commands.registerCommand("terrapin.revealNodeAtCursor", async () => {
 			const editor = vscode.window.activeTextEditor;
 			if (!editor || !isTurtleDocument(editor.document)) return;
 			const panel = manager.show(editor.document.uri, vscode.ViewColumn.Beside, true);
@@ -81,12 +81,12 @@ export function activate(context: vscode.ExtensionContext) {
 			const found = await panel.revealLine(editor.selection.active.line);
 			if (!found) {
 				void vscode.window.showInformationMessage(
-					"Carapace: no visible node is defined on this line (it may be hidden by the graph settings)."
+					"Terrapin: no visible node is defined on this line (it may be hidden by the graph settings)."
 				);
 			}
 		}),
 
-		vscode.commands.registerCommand("carapace.newSampleOntology", async () => {
+		vscode.commands.registerCommand("terrapin.newSampleOntology", async () => {
 			const document = await vscode.workspace.openTextDocument({
 				language: TURTLE_LANGUAGE_ID,
 				content: SAMPLE_TURTLE
@@ -95,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 			manager.show(document.uri, vscode.ViewColumn.Beside, true);
 		}),
 
-		vscode.commands.registerCommand("carapace.convertRdfXml", async (arg?: unknown) => {
+		vscode.commands.registerCommand("terrapin.convertRdfXml", async (arg?: unknown) => {
 			let uri = arg instanceof vscode.Uri ? arg : vscode.window.activeTextEditor?.document.uri;
 			if (!uri || !/\.(rdf|owl|xml)$/i.test(uri.path)) {
 				const picked = await vscode.window.showOpenDialog({
@@ -116,17 +116,17 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 				await vscode.window.showTextDocument(document);
 				void vscode.window.showInformationMessage(
-					`Carapace: converted ${displayName(uri)} to Turtle. Save it as a .ttl file to keep it.`
+					`Terrapin: converted ${displayName(uri)} to Turtle. Save it as a .ttl file to keep it.`
 				);
 			} catch (error) {
 				void vscode.window.showErrorMessage(
-					`Carapace: could not convert ${displayName(uri)}: ${error instanceof Error ? error.message : String(error)}`
+					`Terrapin: could not convert ${displayName(uri)}: ${error instanceof Error ? error.message : String(error)}`
 				);
 			}
 		}),
 
 		// Internal: lets integration tests and other extensions inspect a graph's state.
-		vscode.commands.registerCommand("carapace._graphStatus", (arg?: unknown): GraphStatus | null => {
+		vscode.commands.registerCommand("terrapin._graphStatus", (arg?: unknown): GraphStatus | null => {
 			const uri = typeof arg === "string" ? vscode.Uri.parse(arg) : arg instanceof vscode.Uri ? arg : undefined;
 			const panel = uri ? manager.get(uri) : manager.target();
 			return panel?.status ?? null;

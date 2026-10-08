@@ -57,7 +57,7 @@ describe("activation", () => {
 		const source = ["config.ts", "diagnostics.ts", "graphPanel.ts"]
 			.map((f) => readFileSync(join(__dirname, "../../src/extension", f), "utf8"))
 			.join("\n");
-		const keys = [...source.matchAll(/get<[^>]+>\("([\w.]+)"/g)].map((m) => `carapace.${m[1]}`);
+		const keys = [...source.matchAll(/get<[^>]+>\("([\w.]+)"/g)].map((m) => `terrapin.${m[1]}`);
 		expect(keys.length).toBeGreaterThan(5);
 		for (const key of keys) expect(manifest.contributes.configuration.properties, key).toHaveProperty([key]);
 	});
@@ -68,7 +68,7 @@ describe("diagnostics", () => {
 		const items = vscode.diagnostics.get(broken.uri.toString())!;
 		expect(items).toHaveLength(1);
 		expect(items[0].range.start.line).toBe(2);
-		expect(items[0].source).toBe("carapace");
+		expect(items[0].source).toBe("terrapin");
 		expect(items[0].message).not.toMatch(/on line/);
 		expect(vscode.diagnostics.get(sample.uri.toString())).toEqual([]);
 	});
@@ -116,8 +116,8 @@ describe("configuration", () => {
 		expect(expandBuiltinPrefix("http://x/y")).toBe("http://x/y");
 		expect(expandBuiltinPrefix("unknown:x")).toBe("unknown:x");
 
-		vscode.configuration["carapace.graph.hiddenInstanceOf"] = ["owl:Ontology", "owl:Restriction"];
-		vscode.configuration["carapace.graph.nodeNamePredicate"] = "skos:prefLabel";
+		vscode.configuration["terrapin.graph.hiddenInstanceOf"] = ["owl:Ontology", "owl:Restriction"];
+		vscode.configuration["terrapin.graph.nodeNamePredicate"] = "skos:prefLabel";
 		const settings = readDefaultGraphSettings();
 		expect(settings.hiddenInstanceOfUris).toEqual([
 			"http://www.w3.org/2002/07/owl#Ontology",

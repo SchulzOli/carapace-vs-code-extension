@@ -12,7 +12,7 @@ import { displayName } from "./documents";
 import type { GraphStateStore } from "./stateStore";
 import { webviewHtml } from "./webviewHtml";
 
-export const GRAPH_VIEW_TYPE = "carapace.graph";
+export const GRAPH_VIEW_TYPE = "terrapin.graph";
 
 /** How long an editor selection we caused ourselves is ignored, to avoid graph -> editor -> graph echoes. */
 const ECHO_SUPPRESSION_MS = 600;
@@ -60,7 +60,7 @@ export class GraphPanel implements vscode.Disposable {
 			}),
 			vscode.window.onDidChangeTextEditorSelection((event) => this.onSelectionChanged(event)),
 			vscode.workspace.onDidChangeConfiguration((event) => {
-				if (event.affectsConfiguration("carapace")) {
+				if (event.affectsConfiguration("terrapin")) {
 					this.post({
 						type: "config",
 						config: readViewConfig(this.uri),
@@ -141,7 +141,7 @@ export class GraphPanel implements vscode.Disposable {
 			config: readViewConfig(this.uri)
 		});
 		if (!document) {
-			void vscode.window.showWarningMessage(`Carapace: could not open ${displayName(this.uri)}.`);
+			void vscode.window.showWarningMessage(`Terrapin: could not open ${displayName(this.uri)}.`);
 		}
 	}
 
@@ -227,7 +227,7 @@ export class GraphPanel implements vscode.Disposable {
 				break;
 			case "export":
 				void this.exportGraph(message.format, message.data).catch((error: unknown) =>
-					vscode.window.showErrorMessage(`Carapace: export failed: ${String(error)}`)
+					vscode.window.showErrorMessage(`Terrapin: export failed: ${String(error)}`)
 				);
 				break;
 			case "status":
@@ -241,7 +241,7 @@ export class GraphPanel implements vscode.Disposable {
 				break;
 			}
 			case "notify": {
-				const text = `Carapace: ${message.message}`;
+				const text = `Terrapin: ${message.message}`;
 				if (message.level === "error") void vscode.window.showErrorMessage(text);
 				else if (message.level === "warning") void vscode.window.showWarningMessage(text);
 				else void vscode.window.showInformationMessage(text);
@@ -346,7 +346,7 @@ export class GraphPanelManager implements vscode.WebviewPanelSerializer<WebviewS
 	}
 
 	private updateContext() {
-		void vscode.commands.executeCommand("setContext", "carapace.graphOpen", this.panels.size > 0);
+		void vscode.commands.executeCommand("setContext", "terrapin.graphOpen", this.panels.size > 0);
 	}
 
 	get(uri: vscode.Uri): GraphPanel | undefined {

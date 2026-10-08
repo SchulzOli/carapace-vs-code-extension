@@ -2,7 +2,7 @@
 
 ## 0.1.0
 
-Initial release — a VS Code port of [Carapace](https://github.com/sellsol/carapace).
+Initial release of Terrapin, an unofficial VS Code port of [Carapace](https://github.com/sellsol/carapace).
 
 - Live, OWL-aware graph preview for Turtle (`.ttl`) files, updating as you type and keeping the last valid graph while the document has syntax errors.
 - Carapace's graph engine: entity classification (classes, datatypes, object/data/annotation properties, instances, literals, blank nodes), collections (`owl:unionOf`, `owl:intersectionOf`, `owl:oneOf`, RDF lists), node naming via `rdfs:label`, stable blank-node identities and force-directed layout.

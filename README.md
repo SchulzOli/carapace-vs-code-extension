@@ -125,7 +125,7 @@ On Linux without a display, run integration tests with `xvfb-run -a npm run test
 
 ## Releasing
 
-Pushing a version tag (`npm version minor && git push --follow-tags`) runs the full CI suite. If it passes, the extension is published to the VS Code Marketplace and Open VSX, and a GitHub Release is created. One-time setup and details: [docs/RELEASING.md](docs/RELEASING.md).
+Pushing a version tag (`npm version minor && git push --follow-tags`) runs the full CI suite. If it passes, the extension is published to the VS Code Marketplace and Open VSX, and a GitHub Release is created. The Marketplace sign-in uses Microsoft Entra ID through GitHub OIDC, so no token is stored. One-time setup and details: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Credits & licence
 

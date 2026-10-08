@@ -344,7 +344,19 @@ PREFIX : <http://example/>
 	);
 	await expect(tripleTerm).toHaveCount(1);
 	await expect(tripleTerm).toContainText("TRIPLE TERM");
-	await expect(tripleTerm).toContainText(":earth :shape :flat");
+	// drawn as a card with one row per part; parts without a node of their own keep their Turtle form
+	await expect(tripleTerm.locator(".statement-role")).toHaveText(["S", "P", "O"]);
+	await expect(tripleTerm.locator(".node-body-text")).toHaveText([":earth", ":shape", ":flat"]);
+	await expect(tripleTerm.locator("title")).toHaveText("<<( :earth :shape :flat )>>");
+
+	// subject and object rows are connected to their nodes where those are drawn: alice and bob of the annotated
+	// triple, bob of the reified one (:carol is only quoted, so it has no node)
+	const annotated = page.locator(
+		'g.node-tripleTerm[data-uri="<<(<http://example/alice> <http://example/knows> <http://example/bob>)>>"]'
+	);
+	await expect(annotated.locator(".node-body-text")).toHaveText(["alice", ":knows", "bob"]);
+	await expect(page.locator("g.term-edge path.edge-line")).toHaveCount(3);
+	await expect(page.locator("g.term-edge .term-port")).toHaveCount(3);
 	await expect(node(page, "http://example/claim1")).toHaveCount(1);
 
 	// clicking the reifier jumps to the line of the reified triple

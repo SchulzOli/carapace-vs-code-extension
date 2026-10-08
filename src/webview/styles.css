@@ -177,9 +177,34 @@ body {
 	fill: var(--mauve);
 }
 
+/* triple term cards and the connectors from their subject and object rows */
 .term-edge .edge-line {
 	stroke: var(--flamingo);
 	stroke-linecap: round;
+	opacity: 0.8;
+}
+
+.term-edge.highlighted .edge-line {
+	stroke: var(--accent);
+	opacity: 1;
+}
+
+.term-port {
+	fill: var(--flamingo);
+}
+
+.statement-divider {
+	stroke: color-mix(in srgb, var(--flamingo) 30%, var(--mantle));
+	stroke-width: 1;
+}
+
+.statement-role {
+	fill: var(--subtext-0);
+}
+
+.statement-bar,
+.statement-badge {
+	fill: var(--overlay-0);
 }
 
 .edge-label {

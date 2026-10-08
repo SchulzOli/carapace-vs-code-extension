@@ -11,9 +11,13 @@ import {
 	NODE_LABEL_GAP,
 	NODE_LINE_HEIGHT,
 	NODE_MAX_WIDTH,
-	NODE_MIN_WIDTH
+	NODE_MIN_WIDTH,
+	STATEMENT_MAX_WIDTH,
+	STATEMENT_MIN_WIDTH,
+	STATEMENT_ROW_PADDING_Y,
+	STATEMENT_TEXT_OFFSET_X
 } from "./visualisation";
-import type { EntityType } from "./types";
+import type { EntityType, StatementRole, StatementRow } from "./types";
 
 export const TEXT_VERTICAL_OFFSET_FACTOR = 0.35;
 export const NODE_FONT_FAMILY =
@@ -133,4 +137,66 @@ export function measureBlankNodeDimensions(nodeType: EntityType): {
 		width: textWidth + 8,
 		height: NODE_HEADER_HEIGHT + 2
 	};
+}
+
+export type StatementPart = { role: StatementRole; prefix: string | null; text: string; colour: string | null };
+
+/** Horizontal inset of a node's content from its left edge. */
+export const NODE_CONTENT_INSET = NODE_BORDER_WIDTH / 2 + NODE_CONTENT_PADDING_X / 2;
+
+/** Lays out a triple term card: a header and one row per part, each row wrapping its text like a node body. */
+export function measureStatementCard(parts: StatementPart[]): { width: number; height: number; rows: StatementRow[] } {
+	const ctx = getSharedCtx();
+	const bodyFont = `${NODE_BODY_FONT_SIZE}px ${NODE_FONT_FAMILY}`;
+	const badgeFont = `${NODE_BADGE_FONT_SIZE}px ${NODE_FONT_FAMILY}`;
+	const textX = NODE_CONTENT_INSET + STATEMENT_TEXT_OFFSET_X;
+
+	const badgeWidths = parts.map((part) =>
+		part.prefix && ctx ? measureCtxWidth(part.prefix, badgeFont, ctx) + NODE_BADGE_PADDING_X * 2 : 0
+	);
+	const lead = (i: number) => (badgeWidths[i] ? badgeWidths[i] + NODE_LABEL_GAP : 0);
+
+	let width = STATEMENT_MIN_WIDTH;
+	if (ctx) {
+		const headerWidth = measureCtxWidth(
+			entityTypeLabel("tripleTerm", false),
+			`bold ${NODE_HEADER_FONT_SIZE}px ${NODE_FONT_FAMILY}`,
+			ctx
+		);
+		const widest = Math.max(
+			...parts.map(
+				(part, i) => textX + lead(i) + measureCtxWidth(part.text, bodyFont, ctx) + 5 + NODE_CONTENT_INSET
+			)
+		);
+		width = Math.min(
+			STATEMENT_MAX_WIDTH,
+			Math.max(STATEMENT_MIN_WIDTH, widest, headerWidth + NODE_CONTENT_PADDING_X)
+		);
+	}
+
+	const available = width - textX - NODE_CONTENT_INSET;
+	let y = NODE_HEADER_HEIGHT + NODE_CONTENT_PADDING_Y;
+	const rows = parts.map((part, i): StatementRow => {
+		let lines = [part.text];
+		if (ctx) {
+			ctx.font = bodyFont;
+			const first = breakText(part.text, available - lead(i), ctx);
+			lines = first.length > 1 ? [first[0], ...breakText(first.slice(1).join(" "), available, ctx)] : first;
+		}
+		const height = lines.length * NODE_LINE_HEIGHT + STATEMENT_ROW_PADDING_Y * 2;
+		const row: StatementRow = {
+			role: part.role,
+			prefix: part.prefix,
+			lines,
+			badgeWidth: badgeWidths[i],
+			colour: part.colour,
+			y,
+			height,
+			portY: y + STATEMENT_ROW_PADDING_Y + NODE_LINE_HEIGHT / 2
+		};
+		y += height;
+		return row;
+	});
+
+	return { width, height: y + NODE_CONTENT_PADDING_Y + NODE_BORDER_WIDTH, rows };
 }

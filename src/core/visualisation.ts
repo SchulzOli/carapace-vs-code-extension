@@ -19,6 +19,16 @@ export const NODE_BODY_FONT_SIZE = 13;
 export const NODE_BADGE_PADDING_X = 4;
 export const NODE_BADGE_FONT_SIZE = 10;
 
+// triple term cards: one row per part of the statement
+export const STATEMENT_MIN_WIDTH = 150;
+export const STATEMENT_MAX_WIDTH = 260;
+export const STATEMENT_ROW_PADDING_Y = 3;
+export const STATEMENT_ROLE_FONT_SIZE = 8;
+export const STATEMENT_BAR_OFFSET_X = 10;
+export const STATEMENT_BAR_WIDTH = 3;
+export const STATEMENT_TEXT_OFFSET_X = 18;
+export const STATEMENT_PORT_RADIUS = 3;
+
 export const BLANK_NODE_RADIUS = 6;
 export const COLLECTION_NODE_RADIUS = 12;
 

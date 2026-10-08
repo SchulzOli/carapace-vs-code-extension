@@ -28,6 +28,7 @@ export const STATEMENT_BAR_OFFSET_X = 10;
 export const STATEMENT_BAR_WIDTH = 3;
 export const STATEMENT_TEXT_OFFSET_X = 18;
 export const STATEMENT_PORT_RADIUS = 3;
+export const STATEMENT_TAG_FONT_SIZE = 10;
 
 export const BLANK_NODE_RADIUS = 6;
 export const COLLECTION_NODE_RADIUS = 12;

@@ -11,7 +11,7 @@ import { measureBlankNodeDimensions, measureNodeDimensions, measureStatementCard
 import type { StatementPart } from "./layout";
 import { classifyUriType, resolveLocalName, resolvePrefix } from "./ontology";
 import { inHiddenNamespace } from "./settings";
-import { formatTerm, isTripleTerm, tripleTermKey } from "./tripleTerms";
+import { formatTerm, isTripleTerm, literalParts, tripleTermKey } from "./tripleTerms";
 import type { RdfTerm } from "./tripleTerms";
 
 export class Builder {
@@ -475,11 +475,23 @@ export class Builder {
 		}
 	}
 
-	/** What a card row shows: the label of the part's node where it is drawn, otherwise the part in Turtle form. */
+	/**
+	 * What a card row shows: a literal's value with its datatype or language as a tag, the label of the part's node
+	 * where it is drawn, otherwise the part in Turtle form.
+	 */
 	private statementPart(role: StatementRole, part: RdfTerm, node: Node | undefined): StatementPart {
-		if (part.termType === "Literal" || part.termType === "Quad" || part.termType === "BlankNode") {
-			const type: EntityType =
-				part.termType === "Literal" ? "literal" : part.termType === "Quad" ? "tripleTerm" : "blank";
+		if (part.termType === "Literal") {
+			const { value, tag } = literalParts(part, this.namespacePrefixes);
+			return {
+				role,
+				prefix: null,
+				text: value,
+				tag,
+				colour: node ? entityTypeColour(node.nodeType, node.external) : ENTITY_TYPE_COLOURS.literal
+			};
+		}
+		if (part.termType === "Quad" || part.termType === "BlankNode") {
+			const type: EntityType = part.termType === "Quad" ? "tripleTerm" : "blank";
 			return {
 				role,
 				prefix: null,

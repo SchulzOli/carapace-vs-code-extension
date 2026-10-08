@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Turtle 1.2 graphs: triple terms are drawn as cards with a subject, predicate and object row, in the colours of those parts' entity types. Curved connectors run from the subject and object rows to their nodes, replacing the dashed lines.
+- Turtle 1.2 graphs: triple terms are drawn as cards with a subject, predicate and object row, in the colours of those parts' entity types. Curved connectors run from the subject and object rows to their nodes, replacing the dashed lines. Literals show their value, with the datatype or language as a small tag (`112` with `zoo:Age` instead of `"112"^^zoo:Age`).
 
 ## 0.2.0 — 2026-10-08
 

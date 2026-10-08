@@ -209,6 +209,25 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 			]);
 		});
 
+		it("shows a literal's value on the card with its datatype or language as a tag", () => {
+			const analysis = analyseTurtle(`PREFIX : <http://example/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+:a :p <<( :shelly :age "112"^^:Age )>>, <<( :shelly :name "Shelly"@en )>>, <<( :shelly :legs 4 )>>,
+	<<( :shelly :born "1912-01-01"^^xsd:date )>>, <<( :shelly :motto "slow" )>> .`);
+			const { nodes } = buildGraph(analysis.triples, defaultGraphSettings(), [], analysis.prefixMap);
+			const objects = nodes
+				.filter((n) => n.statement)
+				.map((n) => n.statement![2])
+				.map((row) => [row.lines.join(" "), row.tag]);
+			expect(objects).toEqual([
+				["112", ":Age"],
+				["Shelly", "@en"],
+				["4", null],
+				["1912-01-01", "xsd:date"],
+				["slow", null]
+			]);
+		});
+
 		it("classifies named reifiers as instances unless they are typed", () => {
 			const { nodes } = graph();
 			expect(nodes.find((n) => n.uri === EX + "ageClaim")?.nodeType).toBe("instance");

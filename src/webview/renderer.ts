@@ -21,6 +21,7 @@ import {
 	STATEMENT_PORT_RADIUS,
 	STATEMENT_ROLE_FONT_SIZE,
 	STATEMENT_ROW_PADDING_Y,
+	STATEMENT_TAG_FONT_SIZE,
 	STATEMENT_TEXT_OFFSET_X
 } from "../core/visualisation";
 import { svg } from "./dom";
@@ -394,6 +395,23 @@ function appendStatementRows(g: SVGGElement, node: Node) {
 						"pointer-events": "none"
 					},
 					[row.prefix]
+				)
+			);
+		}
+
+		if (row.tag) {
+			g.append(
+				svg(
+					"text",
+					{
+						class: "statement-tag",
+						x: node.width - NODE_CONTENT_INSET,
+						y: top + NODE_LINE_HEIGHT / 2 + STATEMENT_TAG_FONT_SIZE * TEXT_VERTICAL_OFFSET_FACTOR,
+						"text-anchor": "end",
+						"font-size": STATEMENT_TAG_FONT_SIZE,
+						"pointer-events": "none"
+					},
+					[row.tag]
 				)
 			);
 		}

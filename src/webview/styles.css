@@ -198,7 +198,8 @@ body {
 	stroke-width: 1;
 }
 
-.statement-role {
+.statement-role,
+.statement-tag {
 	fill: var(--subtext-0);
 }
 

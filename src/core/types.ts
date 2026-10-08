@@ -20,6 +20,9 @@ export type StatementRow = {
 	prefix: string | null;
 	lines: string[];
 	badgeWidth: number;
+	/** a literal's datatype or language, drawn small and muted at the end of the first line */
+	tag: string | null;
+	tagWidth: number;
 	/** palette colour of the part's entity type, `null` for a part without a node of its own */
 	colour: string | null;
 	/** top of the row and centre of its connector, relative to the node */

@@ -15,6 +15,7 @@ import {
 	STATEMENT_MAX_WIDTH,
 	STATEMENT_MIN_WIDTH,
 	STATEMENT_ROW_PADDING_Y,
+	STATEMENT_TAG_FONT_SIZE,
 	STATEMENT_TEXT_OFFSET_X
 } from "./visualisation";
 import type { EntityType, StatementRole, StatementRow } from "./types";
@@ -139,7 +140,13 @@ export function measureBlankNodeDimensions(nodeType: EntityType): {
 	};
 }
 
-export type StatementPart = { role: StatementRole; prefix: string | null; text: string; colour: string | null };
+export type StatementPart = {
+	role: StatementRole;
+	prefix: string | null;
+	text: string;
+	tag?: string | null;
+	colour: string | null;
+};
 
 /** Horizontal inset of a node's content from its left edge. */
 export const NODE_CONTENT_INSET = NODE_BORDER_WIDTH / 2 + NODE_CONTENT_PADDING_X / 2;
@@ -155,6 +162,9 @@ export function measureStatementCard(parts: StatementPart[]): { width: number; h
 		part.prefix && ctx ? measureCtxWidth(part.prefix, badgeFont, ctx) + NODE_BADGE_PADDING_X * 2 : 0
 	);
 	const lead = (i: number) => (badgeWidths[i] ? badgeWidths[i] + NODE_LABEL_GAP : 0);
+	const tagFont = `${STATEMENT_TAG_FONT_SIZE}px ${NODE_FONT_FAMILY}`;
+	const tagWidths = parts.map((part) => (part.tag && ctx ? measureCtxWidth(part.tag, tagFont, ctx) : 0));
+	const trail = (i: number) => (tagWidths[i] ? tagWidths[i] + NODE_LABEL_GAP * 2 : 0);
 
 	let width = STATEMENT_MIN_WIDTH;
 	if (ctx) {
@@ -165,7 +175,8 @@ export function measureStatementCard(parts: StatementPart[]): { width: number; h
 		);
 		const widest = Math.max(
 			...parts.map(
-				(part, i) => textX + lead(i) + measureCtxWidth(part.text, bodyFont, ctx) + 5 + NODE_CONTENT_INSET
+				(part, i) =>
+					textX + lead(i) + measureCtxWidth(part.text, bodyFont, ctx) + 5 + trail(i) + NODE_CONTENT_INSET
 			)
 		);
 		width = Math.min(
@@ -180,7 +191,7 @@ export function measureStatementCard(parts: StatementPart[]): { width: number; h
 		let lines = [part.text];
 		if (ctx) {
 			ctx.font = bodyFont;
-			const first = breakText(part.text, available - lead(i), ctx);
+			const first = breakText(part.text, available - lead(i) - trail(i), ctx);
 			lines = first.length > 1 ? [first[0], ...breakText(first.slice(1).join(" "), available, ctx)] : first;
 		}
 		const height = lines.length * NODE_LINE_HEIGHT + STATEMENT_ROW_PADDING_Y * 2;
@@ -189,6 +200,8 @@ export function measureStatementCard(parts: StatementPart[]): { width: number; h
 			prefix: part.prefix,
 			lines,
 			badgeWidth: badgeWidths[i],
+			tag: part.tag ?? null,
+			tagWidth: tagWidths[i],
 			colour: part.colour,
 			y,
 			height,

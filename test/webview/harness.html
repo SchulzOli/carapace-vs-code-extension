@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="stylesheet" href="../../dist/codicons/codicon.css" />
+		<link rel="stylesheet" href="../../dist/webview-styles.css" />
+		<style>
+			/* stand-ins for the variables VS Code injects into webviews */
+			body.vscode-light {
+				--vscode-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+				--vscode-foreground: #3b3b3b;
+				--vscode-editor-background: #ffffff;
+				--vscode-editorWidget-background: #f8f8f8;
+				--vscode-widget-border: #e5e5e5;
+				--vscode-input-background: #ffffff;
+				--vscode-input-border: #cecece;
+				--vscode-button-background: #005fb8;
+				--vscode-button-foreground: #ffffff;
+				--vscode-badge-background: #cccccc;
+				--vscode-badge-foreground: #3b3b3b;
+				--vscode-descriptionForeground: #717171;
+				--vscode-errorForeground: #f85149;
+				--vscode-focusBorder: #005fb8;
+			}
+			body.vscode-dark {
+				--vscode-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+				--vscode-foreground: #cccccc;
+				--vscode-editor-background: #1f1f1f;
+				--vscode-editorWidget-background: #202020;
+				--vscode-widget-border: #313131;
+				--vscode-input-background: #313131;
+				--vscode-input-border: #3c3c3c;
+				--vscode-button-background: #0078d4;
+				--vscode-button-foreground: #ffffff;
+				--vscode-badge-background: #616161;
+				--vscode-badge-foreground: #f8f8f8;
+				--vscode-descriptionForeground: #9d9d9d;
+				--vscode-errorForeground: #f85149;
+				--vscode-focusBorder: #0078d4;
+				--vscode-sideBar-background: #181818;
+				--vscode-icon-foreground: #cccccc;
+			}
+		</style>
+	</head>
+	<body class="vscode-light">
+		<div id="app"></div>
+		<script>
+			const params = new URLSearchParams(location.search);
+			if (params.get("theme") === "dark") document.body.className = "vscode-dark";
+			window.__messages = [];
+			window.__state = undefined;
+			window.acquireVsCodeApi = () => ({
+				postMessage: (message) => window.__messages.push(JSON.parse(JSON.stringify(message))),
+				getState: () => window.__state,
+				setState: (state) => (window.__state = state)
+			});
+			window.__send = (message) => window.postMessage(message, "*");
+		</script>
+		<script src="../../dist/webview.js"></script>
+	</body>
+</html>

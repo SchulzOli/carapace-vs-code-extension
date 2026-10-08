@@ -1,0 +1,15 @@
+**
+!dist/extension.js
+!dist/extension.js.LEGAL.txt
+!dist/webview.js
+!dist/webview-styles.css
+!dist/codicons/**
+!media/icon.png
+!media/graph-light.svg
+!media/graph-dark.svg
+!syntaxes/**
+!language-configuration.json
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE

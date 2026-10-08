@@ -37,7 +37,7 @@ jobs:
     identity:
         name: Show Marketplace identity
         if: github.event_name == 'workflow_dispatch' && inputs.show-marketplace-identity
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         environment: marketplace
         permissions:
             id-token: write # sign in to Microsoft Entra ID with GitHub's OIDC token
@@ -68,7 +68,7 @@ jobs:
     publish:
         name: Package & publish
         needs: ci
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         environment: marketplace
         permissions:
             contents: write # create the GitHub Release
@@ -80,11 +80,14 @@ jobs:
             VSCE_PAT: ${{ secrets.VSCE_PAT }}
             OVSX_PAT: ${{ secrets.OVSX_PAT }}
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@v7
               with:
                   node-version: 22
-                  cache: npm
+                  # no dependency cache in the job that can publish (avoids cache poisoning)
+                  package-manager-cache: false
             - run: npm ci
 
             - name: Check version
@@ -107,7 +110,7 @@ jobs:
                   VSIX: ${{ steps.version.outputs.vsix }}
               run: npx vsce package --no-dependencies ${PRE_RELEASE_FLAG:+"$PRE_RELEASE_FLAG"} --out "$VSIX"
 
-            - uses: actions/upload-artifact@v4
+            - uses: actions/upload-artifact@v7
               with:
                   name: carapace-turtle-vscode-${{ steps.version.outputs.version }}
                   path: ${{ steps.version.outputs.vsix }}

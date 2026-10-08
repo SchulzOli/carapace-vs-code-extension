@@ -63,11 +63,11 @@ jobs:
                   fi
 
             - name: Package
-              run: npx vsce package --no-dependencies $PRE_RELEASE_FLAG --out "carapace-vscode-${{ steps.version.outputs.version }}.vsix"
+              run: npx vsce package --no-dependencies $PRE_RELEASE_FLAG --out "carapace-turtle-vscode-${{ steps.version.outputs.version }}.vsix"
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: carapace-vscode-${{ steps.version.outputs.version }}
+                  name: carapace-turtle-vscode-${{ steps.version.outputs.version }}
                   path: "*.vsix"
 
             - name: Publish to the VS Code Marketplace

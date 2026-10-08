@@ -54,7 +54,7 @@ describe("Carapace extension", () => {
 		const { document } = await openFixture("sample.ttl");
 		assert.strictEqual(document.languageId, "turtle");
 
-		const extension = vscode.extensions.all.find((e) => e.packageJSON.name === "carapace-vscode");
+		const extension = vscode.extensions.all.find((e) => e.packageJSON.name === "carapace-turtle-vscode");
 		assert.ok(extension, "extension is installed");
 		await waitFor(() => extension.isActive, Boolean, "activation");
 

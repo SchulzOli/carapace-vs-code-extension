@@ -1,11 +1,11 @@
 <h1 align="center">
   <img src="media/icon.png" alt="Carapace" width="96"><br>
-  Carapace for VS Code
+  Carapace Turtle for VS Code
 </h1>
 
 <h4 align="center">Live, OWL-aware graph visualisation for Turtle (TTL) ontologies — right next to your editor.</h4>
 
-This extension brings [**Carapace**](https://github.com/sellsol/carapace), the text-first Turtle ontology editor and graph visualiser, into VS Code. Write Turtle in VS Code's editor and watch the graph update beside it. Carapace's graph engine is ported unchanged, so classes, properties, instances, literals, blank nodes and OWL collections are drawn exactly as on [carapace.space](http://www.carapace.space).
+This extension brings [**Carapace**](https://github.com/sellsol/carapace), the text-first Turtle ontology editor and graph visualiser, into VS Code. It is an independent, unofficial port and is not affiliated with the Carapace project. Write Turtle in VS Code's editor and watch the graph update beside it. Carapace's graph engine is ported unchanged, so classes, properties, instances, literals, blank nodes and OWL collections are drawn exactly as on [carapace.space](http://www.carapace.space).
 
 <p align="center">
   <img src="docs/screenshots/graph-light.png" width="90%" alt="Graph of the sample ontology in a light theme" />

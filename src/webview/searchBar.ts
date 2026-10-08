@@ -9,7 +9,7 @@ export function searchGraph(query: string, nodes: Node[], edges: Edge[]): GraphS
 		.filter((n) => `${n.prefix ?? ""}:${n.label}`.toLowerCase().includes(q) || n.uri.toLowerCase().includes(q))
 		.map((node) => ({ kind: "node", node }));
 	const edgeResults: GraphSearchResult[] = edges
-		.filter((e) => !e.collectionEdge && e.label.split("\n").some((p) => p.toLowerCase().includes(q)))
+		.filter((e) => !e.collectionEdge && !e.termEdge && e.label.split("\n").some((p) => p.toLowerCase().includes(q)))
 		.map((edge) => ({ kind: "edge", edge }));
 
 	return [...nodeResults, ...edgeResults];

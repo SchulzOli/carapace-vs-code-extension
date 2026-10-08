@@ -177,6 +177,11 @@ body {
 	fill: var(--mauve);
 }
 
+.term-edge .edge-line {
+	stroke: var(--flamingo);
+	stroke-linecap: round;
+}
+
 .edge-label {
 	fill: var(--text);
 	stroke: var(--mantle);

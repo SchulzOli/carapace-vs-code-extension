@@ -43,6 +43,8 @@ export const INFERRED_TYPES: ReadonlyMap<string, { subjectType: EntityType; obje
 	[RDFS_NS + "range", { subjectType: "objectProperty", objectType: "class" }]
 ]);
 
+export const RDF_REIFIES = RDF_NS + "reifies";
+
 export const RDF_FIRST = RDF_NS + "first";
 export const RDF_REST = RDF_NS + "rest";
 export const RDF_NIL = RDF_NS + "nil";

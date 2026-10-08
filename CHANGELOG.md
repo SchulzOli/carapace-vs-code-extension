@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Turtle 1.2 graphs:
+    - Annotations (`{| … |}`) are now visible by default, drawn on the triple term they describe. Before, they were hidden along with blank nodes.
+    - Triple terms are linked to their subject and object nodes with dashed lines.
+    - Named reifiers are classified as instances.
+    - Numbers and booleans inside triple terms use Turtle shorthand (`42` instead of `"42"^^xsd:integer`).
+- Layout: unconnected nodes no longer drift far away, so "fit to view" keeps the graph readable.
+
 ## 0.1.0
 
 Initial release — a VS Code port of [Carapace](https://github.com/sellsol/carapace).

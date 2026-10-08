@@ -1,6 +1,6 @@
 import type { Quad } from "n3";
 
-import { RDF_FIRST, RDF_NIL } from "./namespaces";
+import { RDF_FIRST, RDF_NIL, RDF_REIFIES } from "./namespaces";
 import { BLANK_NODE_RADIUS, CANVAS_HEIGHT, CANVAS_WIDTH, COLLECTION_NODE_RADIUS } from "./visualisation";
 import type { CollectionType, Edge, EntityType, Node } from "./types";
 import type { CollectionDescriptor } from "./processor";
@@ -26,6 +26,7 @@ export class Builder {
 	keyToEdge = new Map<string, Edge>();
 	uriToNode = new Map<string, Node>();
 	nextNodeId = 0;
+	tripleTerms = new Map<string, RdfTerm>();
 
 	constructor(
 		settings: GraphSettings,
@@ -52,6 +53,7 @@ export class Builder {
 	build(): { nodes: Node[]; edges: Edge[] } {
 		this.processCollections();
 		this.processRelations();
+		this.linkTripleTerms();
 
 		return {
 			nodes: Array.from(this.uriToNode.values()),
@@ -89,17 +91,31 @@ export class Builder {
 			if (subjectDescriptor?.isChain) continue;
 			if (subjectDescriptor?.isBlank && subjectDescriptor?.isBridge) continue;
 
-			const subjectType =
-				subjectDescriptor?.nodeType ??
-				classifyUriType(quad.subject.value) ??
-				(quad.subject.termType === "BlankNode" ? "blank" : "class");
-			if (inHiddenNamespace(quad.subject.value, this.settings) || subjectDescriptor?.isHidden) continue;
-			if (this.settings.hiddenEntityTypes.includes("blank") && quad.subject.termType === "BlankNode") continue;
-			if (this.settings.hiddenEntityTypes.includes(subjectType)) continue;
+			// RDF 1.2: an anonymous reifier (e.g. from an annotation block `{| ... |}`) is drawn as the triple
+			// term it reifies, so annotations hang off the statement instead of off a hidden blank node
+			const reified =
+				quad.subject.termType === "BlankNode" && subjectDescriptor?.reifiedTerms.length === 1
+					? subjectDescriptor.reifiedTerms[0]
+					: null;
+			if (reified) {
+				if (quad.predicate.value === RDF_REIFIES) continue;
+				if (this.settings.hiddenEntityTypes.includes("tripleTerm")) continue;
+			} else {
+				const subjectType =
+					subjectDescriptor?.nodeType ??
+					classifyUriType(quad.subject.value) ??
+					(quad.subject.termType === "BlankNode" ? "blank" : "class");
+				if (inHiddenNamespace(quad.subject.value, this.settings) || subjectDescriptor?.isHidden) continue;
+				if (this.settings.hiddenEntityTypes.includes("blank") && quad.subject.termType === "BlankNode")
+					continue;
+				if (this.settings.hiddenEntityTypes.includes(subjectType)) continue;
+			}
 
 			// Create source node
 			let source: Node;
-			if (quad.subject.termType === "BlankNode") {
+			if (reified) {
+				source = this.addTripleTermNode(reified, quad.subject.value);
+			} else if (quad.subject.termType === "BlankNode") {
 				source = this.addBlankNode(quad.subject.value, quad.object.value);
 			} else {
 				source = this.addNode(quad.subject.value, quad.object.value);
@@ -389,6 +405,7 @@ export class Builder {
 	private addTripleTermNode(term: RdfTerm, nearbyUri: string): Node {
 		const key = tripleTermKey(term);
 		if (this.uriToNode.has(key)) return this.uriToNode.get(key)!;
+		this.tripleTerms.set(key, term);
 
 		const label = formatTerm(term, this.namespacePrefixes);
 		const dimensions = measureNodeDimensions(label, null, "tripleTerm", false);
@@ -427,6 +444,49 @@ export class Builder {
 		return node;
 	}
 
+	/** Links each triple term node to the nodes of its subject and object, where those are drawn. */
+	private linkTripleTerms() {
+		for (const [key, term] of this.tripleTerms) {
+			const node = this.uriToNode.get(key);
+			if (!node) continue;
+			for (const part of [term.subject!, term.object!]) {
+				const target = this.findTermNode(part, term);
+				if (target && target !== node) this.addTermEdge(node, target);
+			}
+		}
+	}
+
+	private findTermNode(part: RdfTerm, term: RdfTerm): Node | undefined {
+		const subject = this.resolveUriToStable(term.subject!.value);
+		const predicate = term.predicate!.value;
+		switch (part.termType) {
+			case "Quad":
+				return this.uriToNode.get(tripleTermKey(part));
+			case "Literal":
+				return this.uriToNode.get(`${subject}|${predicate}|${part.value}`);
+			case "BlankNode":
+				return this.uriToNode.get(this.resolveUriToStable(part.value));
+			default:
+				// external nodes are keyed per reference when duplicateExternalNodes is on
+				return this.uriToNode.get(part.value) ?? this.uriToNode.get(`${subject}|${predicate}|${part.value}`);
+		}
+	}
+
+	private addTermEdge(source: Node, target: Node) {
+		const key = `term\u0000${source.uri}\u0000${target.uri}`;
+		if (this.keyToEdge.has(key)) return;
+		const edge: Edge = {
+			id: `edge-${this.edges.length}`,
+			source,
+			target,
+			label: "",
+			collectionEdge: false,
+			termEdge: true
+		};
+		this.edges.push(edge);
+		this.keyToEdge.set(key, edge);
+	}
+
 	private addEdge(source: Node, target: Node, predicateUri: string) {
 		const prefix = resolvePrefix(predicateUri, this.namespacePrefixes);
 		const localName = resolveLocalName(predicateUri);
@@ -444,7 +504,8 @@ export class Builder {
 			source,
 			target,
 			label: fullName,
-			collectionEdge: false
+			collectionEdge: false,
+			termEdge: false
 		};
 		this.edges.push(edge);
 		this.keyToEdge.set(key, edge);
@@ -456,7 +517,8 @@ export class Builder {
 			source,
 			target,
 			label: "",
-			collectionEdge: true
+			collectionEdge: true,
+			termEdge: false
 		};
 		this.edges.push(edge);
 	}

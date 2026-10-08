@@ -7,6 +7,7 @@ import type { GraphSettings } from "./settings";
 import type { LineMapping } from "./lines";
 import { classifyUriType, resolveLocalName } from "./ontology";
 import { inHiddenNamespace } from "./settings";
+import { isTripleTerm } from "./tripleTerms";
 
 export class Preprocessor {
 	settings: GraphSettings;
@@ -123,6 +124,7 @@ export class Preprocessor {
 
 	private digestTypeInferred(quad: Quad) {
 		if (quad.subject.termType === "BlankNode" || quad.object.termType === "BlankNode") return;
+		if (isTripleTerm(quad.subject) || isTripleTerm(quad.object)) return;
 
 		const inference = INFERRED_TYPES.get(quad.predicate.value);
 		if (!inference) return;

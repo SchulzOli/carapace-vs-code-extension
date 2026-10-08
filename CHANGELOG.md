@@ -10,5 +10,6 @@ Initial release — a VS Code port of [Carapace](https://github.com/sellsol/cara
 - Graph controls: pan, zoom, fit, drag (multi-select with Ctrl/Cmd+click or box select), layout lock, re-layout, search over nodes and predicates.
 - Per-document graph settings (entity types, hidden namespaces/predicates/instance-of IRIs, name predicate, duplicated external nodes), with workspace defaults in VS Code settings. Layout, camera, lock and settings are remembered per document.
 - Export to SVG and PNG.
+- Turtle 1.1 and 1.2: strict parsing that passes the full W3C Turtle 1.1 (313) and 1.2 (419) test suites. Supports `VERSION`/`@version` directives, triple terms `<<( s p o )>>`, reified triples `<< s p o ~ r >>`, annotations `{| … |}` and base directions (`@en--ltr`), all highlighted and visualised (Triple Term nodes).
 - Turtle language support: syntax highlighting, syntax-error diagnostics, outline, go to definition and hover for prefixed names and IRIs.
 - _Convert RDF/XML to Turtle_ for `.rdf`/`.owl`/`.xml` files, and _New Sample Ontology_.

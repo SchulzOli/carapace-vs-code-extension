@@ -20,7 +20,8 @@ const SYMBOL_KINDS: Record<EntityType, vscode.SymbolKind> = {
 	instance: vscode.SymbolKind.Object,
 	literal: vscode.SymbolKind.String,
 	blank: vscode.SymbolKind.Variable,
-	list: vscode.SymbolKind.Array
+	list: vscode.SymbolKind.Array,
+	tripleTerm: vscode.SymbolKind.Struct
 };
 
 const TYPE_LABELS = new Map<EntityType, string>(ENTITY_TYPE_DISPLAY.map(({ type, label }) => [type, label]));

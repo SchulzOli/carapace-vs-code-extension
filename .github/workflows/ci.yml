@@ -22,7 +22,12 @@ jobs:
             - run: npm run typecheck
             - run: npm run lint
             - run: npm run format:check
-            - run: npm run test:unit
+            - name: Fetch W3C Turtle 1.1/1.2 test suites
+              run: node scripts/fetch-w3c-tests.mjs
+            - name: Unit tests (incl. W3C Turtle conformance)
+              run: npm run test:unit
+              env:
+                  W3C_RDF_TESTS: .w3c-rdf-tests
             - run: npx playwright install --with-deps chromium
             - run: npm run test:webview
             - name: Upload Playwright report

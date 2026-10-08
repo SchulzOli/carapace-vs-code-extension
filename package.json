@@ -337,7 +337,8 @@
 							"annotationProperty",
 							"instance",
 							"literal",
-							"blank"
+							"blank",
+							"tripleTerm"
 						]
 					},
 					"default": [
@@ -395,7 +396,8 @@
 		"test": "npm run test:unit && npm run test:webview",
 		"test:unit": "vitest run",
 		"test:webview": "node esbuild.mjs && playwright test",
-		"test:integration": "node esbuild.mjs && tsc -p test/integration && node out/test/integration/runTest.js"
+		"test:integration": "node esbuild.mjs && tsc -p test/integration && node out/test/integration/runTest.js",
+		"test:w3c": "node scripts/fetch-w3c-tests.mjs && W3C_RDF_TESTS=.w3c-rdf-tests vitest run test/unit/w3c-conformance.test.ts"
 	},
 	"dependencies": {
 		"d3-force": "^3.0.0",

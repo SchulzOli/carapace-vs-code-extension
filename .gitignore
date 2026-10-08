@@ -5,3 +5,4 @@ out/
 test-results/
 playwright-report/
 .vscode-test/
+.w3c-rdf-tests/

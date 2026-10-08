@@ -9,6 +9,8 @@ import type { GraphSettings } from "./settings";
 import { measureBlankNodeDimensions, measureNodeDimensions } from "./layout";
 import { classifyUriType, resolveLocalName, resolvePrefix } from "./ontology";
 import { inHiddenNamespace } from "./settings";
+import { formatTerm, isTripleTerm, tripleTermKey } from "./tripleTerms";
+import type { RdfTerm } from "./tripleTerms";
 
 export class Builder {
 	settings: GraphSettings;
@@ -117,6 +119,12 @@ export class Builder {
 				}
 
 				const target: Node = this.addBlankNode(objectUri, quad.subject.value);
+				this.addEdge(source, target, quad.predicate.value);
+			} else if (isTripleTerm(quad.object)) {
+				// RDF 1.2 triple term, e.g. the object of rdf:reifies produced by reified triples and annotations
+				if (this.settings.hiddenEntityTypes.includes("tripleTerm")) continue;
+
+				const target = this.addTripleTermNode(quad.object as RdfTerm, quad.subject.value);
 				this.addEdge(source, target, quad.predicate.value);
 			} else if (quad.object.termType === "Literal") {
 				if (this.settings.hiddenEntityTypes.includes("literal")) continue;
@@ -364,6 +372,47 @@ export class Builder {
 			prefix,
 			nodeType: type,
 			external: true,
+			blank: false,
+			collection: false,
+			collectionType: null,
+			x: position?.x ?? Math.random() * CANVAS_WIDTH,
+			y: position?.y ?? Math.random() * CANVAS_HEIGHT,
+			width: dimensions.width,
+			height: dimensions.height,
+			bodyLines: dimensions.bodyLines,
+			badgeWidth: dimensions.badgeWidth
+		};
+		this.uriToNode.set(key, node);
+		return node;
+	}
+
+	private addTripleTermNode(term: RdfTerm, nearbyUri: string): Node {
+		const key = tripleTermKey(term);
+		if (this.uriToNode.has(key)) return this.uriToNode.get(key)!;
+
+		const label = formatTerm(term, this.namespacePrefixes);
+		const dimensions = measureNodeDimensions(label, null, "tripleTerm", false);
+
+		let position = this.cachedPositions.get(key)?.shift();
+		if (!position) {
+			const stableNearbyUri = this.resolveUriToStable(nearbyUri);
+			const nearbyPosition =
+				this.cachedPositions.get(stableNearbyUri)?.[0] ?? this.uriToNode.get(stableNearbyUri);
+			if (nearbyPosition) {
+				position = {
+					x: nearbyPosition.x + (Math.random() - 0.5) * 300,
+					y: nearbyPosition.y + (Math.random() - 0.5) * 300
+				};
+			}
+		}
+
+		const node: Node = {
+			id: `node-${this.nextNodeId++}`,
+			uri: key,
+			label,
+			prefix: null,
+			nodeType: "tripleTerm",
+			external: false,
 			blank: false,
 			collection: false,
 			collectionType: null,

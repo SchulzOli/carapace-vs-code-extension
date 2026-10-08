@@ -18,7 +18,7 @@ export function parseTurtle(content: string): {
 	const lineMapping: LineMapping = { uriToLine: new Map(), lineToUris: new Map() };
 	let tokens: Token[] = [];
 	try {
-		tokens = new Lexer().tokenize(content);
+		tokens = new Lexer({ n3: false }).tokenize(content);
 	} catch (e) {
 		parseError = e instanceof Error ? e.message : "Invalid TTL";
 		parseErrorLine = errorLine(e);
@@ -104,5 +104,5 @@ function makeLineMappingParser(tokens: Token[], lineMapping: LineMapping): Parse
 		}
 	};
 
-	return new Parser({ factory, lexer } as ParserOptions);
+	return new Parser({ format: "text/turtle", factory, lexer } as ParserOptions);
 }

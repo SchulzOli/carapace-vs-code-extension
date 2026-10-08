@@ -70,4 +70,35 @@ describe("turtle grammar", () => {
 		const tokens = tokenize("ex:a ex:hasA ex:b .");
 		expect(tokens.filter(([, scope]) => scope === "keyword.other.type.turtle")).toHaveLength(0);
 	});
+	it("highlights Turtle 1.2 syntax", () => {
+		const tokens = tokenize(
+			'VERSION "1.2"\n@version "1.2" .\n:a :b :c {| :src :x |} ~ :r1 .\n<< :b :l :c ~ :r2 >> :p 1 .\n:d :s <<( :e :sh :f )>> .\n:x :l "hi"@en--ltr .'
+		);
+		expect(tokens.filter(([value]) => value === "VERSION" || value === "@version").map(([, s]) => s)).toEqual([
+			"keyword.other.directive.turtle",
+			"keyword.other.directive.turtle"
+		]);
+		expect(scopeOf(tokens, '"1.2"')).toBe("string.quoted.version.turtle");
+		expect(scopeOf(tokens, "{|")).toBe("punctuation.section.annotation.turtle");
+		expect(scopeOf(tokens, "|}")).toBe("punctuation.section.annotation.turtle");
+		expect(scopeOf(tokens, "~")).toBe("keyword.operator.reifier.turtle");
+		expect(scopeOf(tokens, "<<")).toBe("punctuation.section.reified-triple.turtle");
+		expect(scopeOf(tokens, ">>")).toBe("punctuation.section.reified-triple.turtle");
+		expect(scopeOf(tokens, "<<(")).toBe("punctuation.section.triple-term.turtle");
+		expect(scopeOf(tokens, ")>>")).toBe("punctuation.section.triple-term.turtle");
+		expect(scopeOf(tokens, "r2")).toBe("entity.name.tag.local.turtle");
+		expect(scopeOf(tokens, "sh")).toBe("entity.name.tag.local.turtle");
+		expect(scopeOf(tokens, "ltr")).toBe("constant.language.direction.turtle");
+	});
+
+	it("highlights Unicode names and does not mistake names for directives", () => {
+		const tokens = tokenize("ex:base ex:prefix ex:Straße .\n_:knoten ex:größe ex:version .");
+		expect(tokens.filter(([, scope]) => scope === "keyword.other.directive.turtle")).toHaveLength(0);
+		expect(scopeOf(tokens, "base")).toBe("entity.name.tag.local.turtle");
+		expect(scopeOf(tokens, "Straße")).toBe("entity.name.tag.local.turtle");
+		expect(scopeOf(tokens, "größe")).toBe("entity.name.tag.local.turtle");
+		expect(scopeOf(tokens, "knoten")).toBe("variable.other.blank-node.turtle");
+		// the next statement after a name like ex:base must still be highlighted normally
+		expect(scopeOf(tokens, "version")).toBe("entity.name.tag.local.turtle");
+	});
 });

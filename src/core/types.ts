@@ -7,7 +7,8 @@ export type EntityType =
 	| "instance"
 	| "literal"
 	| "blank"
-	| "list";
+	| "list"
+	| "tripleTerm";
 
 export type CollectionType = "list" | "union" | "intersection" | "enumeration";
 

@@ -3,7 +3,8 @@ import { BUILTIN_PREFIX_TO_NS } from "./namespaces";
 export type TermMatch = { text: string; start: number; end: number };
 
 // <iri> | prefixed:name | :name  (approximation of the Turtle PNAME / IRIREF productions)
-const TERM_PATTERN = /<[^<>"{}|^`\\\s]*>|(?:[A-Za-z][\w-]*(?:\.[\w-]+)*)?:(?:[\w:%-]|\.(?=[\w:%-]))*/g;
+const TERM_PATTERN =
+	/<[^<>"{}|^`\\\s]*>|(?:\p{L}(?:[\p{L}\p{N}_\-·]|\.(?=[\p{L}\p{N}_\-·]))*)?:(?:[\p{L}\p{N}_:%\-·]|\.(?=[\p{L}\p{N}_:%\-·]))*/gu;
 
 /** Finds the IRI reference or prefixed name in `lineText` that covers `character` (0-based). */
 export function termAt(lineText: string, character: number): TermMatch | null {

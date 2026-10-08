@@ -6,3 +6,4 @@ playwright-report/
 .vscode-test/
 package-lock.json
 test/integration/fixtures/
+.w3c-rdf-tests/

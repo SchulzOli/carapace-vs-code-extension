@@ -119,6 +119,7 @@ export enum SymbolKind {
 	Variable = 12,
 	String = 14,
 	Array = 17,
+	Struct = 22,
 	Object = 18,
 	TypeParameter = 25
 }

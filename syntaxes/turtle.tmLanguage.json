@@ -14,6 +14,9 @@
 			"include": "#sparql-directive"
 		},
 		{
+			"include": "#sparql-version"
+		},
+		{
 			"include": "#triple-content"
 		}
 	],
@@ -28,7 +31,7 @@
 			}
 		},
 		"directive": {
-			"begin": "(@prefix|@base)\\b",
+			"begin": "(@prefix|@base|@version)\\b",
 			"beginCaptures": {
 				"1": {
 					"name": "keyword.other.directive.turtle"
@@ -45,6 +48,9 @@
 					"include": "#comment"
 				},
 				{
+					"include": "#version-string"
+				},
+				{
 					"include": "#prefix-declaration"
 				},
 				{
@@ -53,7 +59,7 @@
 			]
 		},
 		"sparql-directive": {
-			"begin": "(?i)\\b(PREFIX|BASE)\\b",
+			"begin": "(?i)(?<![\\p{L}\\p{N}_:.\\-])(PREFIX|BASE)(?![\\p{L}\\p{N}_:.\\-])",
 			"beginCaptures": {
 				"1": {
 					"name": "keyword.other.directive.turtle"
@@ -73,7 +79,7 @@
 			]
 		},
 		"prefix-declaration": {
-			"match": "([A-Za-z][\\w-]*(?:\\.[\\w-]+)*)?(:)",
+			"match": "([\\p{L}](?:[\\p{L}\\p{N}_\\-·]|\\.(?=[\\p{L}\\p{N}_\\-·]))*)?(:)",
 			"captures": {
 				"1": {
 					"name": "entity.name.namespace.turtle"
@@ -99,6 +105,9 @@
 				},
 				{
 					"include": "#string-single"
+				},
+				{
+					"include": "#rdf12"
 				},
 				{
 					"include": "#iri"
@@ -139,7 +148,7 @@
 			}
 		},
 		"prefixed-name": {
-			"match": "([A-Za-z][\\w-]*(?:\\.[\\w-]+)*)?(:)((?:[\\w:%-]|\\\\[_~.!$&'()*+,;=/?#@%-]|\\.(?=[\\w:%-]))*)",
+			"match": "([\\p{L}](?:[\\p{L}\\p{N}_\\-·]|\\.(?=[\\p{L}\\p{N}_\\-·]))*)?(:)((?:[\\p{L}\\p{N}_:%\\-·]|\\\\[_~.!$&'()*+,;=/?#@%\\-]|\\.(?=(?:[\\p{L}\\p{N}_:%\\-·]|\\\\[_~.!$&'()*+,;=/?#@%\\-])))*)",
 			"captures": {
 				"1": {
 					"name": "entity.name.namespace.turtle"
@@ -153,7 +162,7 @@
 			}
 		},
 		"blank-node-label": {
-			"match": "(_:)([\\w-]+(?:\\.[\\w-]+)*)",
+			"match": "(_:)([\\p{L}\\p{N}_](?:[\\p{L}\\p{N}_\\-·]|\\.(?=[\\p{L}\\p{N}_\\-·]))*)",
 			"captures": {
 				"1": {
 					"name": "punctuation.definition.blank-node.turtle"
@@ -164,11 +173,11 @@
 			}
 		},
 		"keyword-a": {
-			"match": "(?<![\\w:-])a(?![\\w:-])",
+			"match": "(?<![\\p{L}\\p{N}_:\\-])a(?![\\p{L}\\p{N}_:\\-])",
 			"name": "keyword.other.type.turtle"
 		},
 		"boolean": {
-			"match": "(?<![\\w:-])(true|false)(?![\\w:-])",
+			"match": "(?<![\\p{L}\\p{N}_:\\-])(true|false)(?![\\p{L}\\p{N}_:\\-])",
 			"name": "constant.language.boolean.turtle"
 		},
 		"number": {
@@ -222,13 +231,19 @@
 		"punctuation": {
 			"patterns": [
 				{
-					"match": "(@)([A-Za-z]+(?:-[A-Za-z0-9]+)*)",
+					"match": "(@)([A-Za-z]+(?:-[A-Za-z0-9]+)*)(?:(--)([A-Za-z]+))?",
 					"captures": {
 						"1": {
 							"name": "punctuation.definition.language-tag.turtle"
 						},
 						"2": {
 							"name": "constant.language.language-tag.turtle"
+						},
+						"3": {
+							"name": "punctuation.separator.direction.turtle"
+						},
+						"4": {
+							"name": "constant.language.direction.turtle"
 						}
 					}
 				},
@@ -255,6 +270,48 @@
 				{
 					"match": "[()]",
 					"name": "punctuation.section.collection.turtle"
+				}
+			]
+		},
+		"sparql-version": {
+			"begin": "(?i)(?<![\\p{L}\\p{N}_:.\\-])(VERSION)(?![\\p{L}\\p{N}_:.\\-])",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.other.directive.turtle"
+				}
+			},
+			"end": "(?<=[\\\"'])",
+			"patterns": [
+				{
+					"include": "#comment"
+				},
+				{
+					"include": "#version-string"
+				}
+			]
+		},
+		"version-string": {
+			"match": "\\\"[^\\\"\\\\\\n]*\\\"|'[^'\\\\\\n]*'",
+			"name": "string.quoted.version.turtle"
+		},
+		"rdf12": {
+			"comment": "RDF 1.2: triple terms <<( s p o )>>, reified triples << s p o ~ r >>, annotations {| p o |}",
+			"patterns": [
+				{
+					"match": "<<\\(|\\)>>",
+					"name": "punctuation.section.triple-term.turtle"
+				},
+				{
+					"match": "<<|>>",
+					"name": "punctuation.section.reified-triple.turtle"
+				},
+				{
+					"match": "\\{\\||\\|\\}",
+					"name": "punctuation.section.annotation.turtle"
+				},
+				{
+					"match": "~",
+					"name": "keyword.operator.reifier.turtle"
 				}
 			]
 		}

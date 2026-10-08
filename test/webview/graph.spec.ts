@@ -327,3 +327,35 @@ test("toolbar zoom and fit adjust the camera", async ({ page }) => {
 	await page.getByRole("button", { name: "Fit to view" }).click();
 	expect(await scale()).toBeCloseTo(fitted, 5);
 });
+
+test("renders Turtle 1.2 triple terms, reifiers and annotations", async ({ page }) => {
+	const text = `VERSION "1.2"
+PREFIX : <http://example/>
+:alice :knows :bob {| :since 2020 |} .
+<< :bob :likes :carol ~ :claim1 >> :certainty 0.8 .
+:dave :said <<( :earth :shape :flat )>> .
+:x :label "hello"@en--ltr .`;
+	await open(page, { text });
+	const status = await waitForGraph(page);
+	expect(status.error).toBeNull();
+
+	const tripleTerm = page.locator(
+		'g.node-tripleTerm[data-uri="<<(<http://example/earth> <http://example/shape> <http://example/flat>)>>"]'
+	);
+	await expect(tripleTerm).toHaveCount(1);
+	await expect(tripleTerm).toContainText("TRIPLE TERM");
+	await expect(tripleTerm).toContainText(":earth :shape :flat");
+	await expect(node(page, "http://example/claim1")).toHaveCount(1);
+
+	// clicking the reifier jumps to the line of the reified triple
+	await clearMessages(page);
+	await node(page, "http://example/claim1").locator(".node-shape").click();
+	await expect
+		.poll(() => lastOf(page, "revealSource"))
+		.toEqual({ type: "revealSource", line: 4, focusEditor: false });
+
+	// triple terms can be hidden from the settings panel
+	await page.getByRole("button", { name: "Graph settings" }).click();
+	await page.getByRole("complementary", { name: "Graph settings" }).getByLabel("Triple Term").uncheck();
+	await expect(page.locator("g.node-tripleTerm")).toHaveCount(0);
+});

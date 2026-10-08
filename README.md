@@ -37,8 +37,17 @@ This extension brings [**Carapace**](https://github.com/sellsol/carapace), the t
 
 - **Remembers your work.** Layout, camera, lock state and settings are saved per document in the workspace.
 - **Export** the graph as **SVG** or **PNG**, cropped to the graph. Exports use the light palette by default; set `carapace.export.theme` to `current` to keep the current theme.
+- **Turtle 1.1 and 1.2.** The parser checks documents strictly against the [W3C Turtle grammar](https://www.w3.org/TR/rdf12-turtle/) and passes the official W3C test suites: all 313 Turtle 1.1 tests and all 419 Turtle 1.2 tests. Turtle 1.2 additions are supported in parsing, highlighting and the graph:
+    - `VERSION "1.2"` / `@version` directives
+    - triple terms `<<( s p o )>>`
+    - reified triples `<< s p o ~ :r >>`
+    - annotations `{| … |}`
+    - base direction on language tags (`"text"@ar--rtl`)
+
+    Triple terms appear as **Triple Term** nodes. Identical triple terms share one node, and they can be hidden like any other entity type. Clicking a reifier jumps to the reified statement. N3-only syntax (formulas, `=>`, variables) is reported as an error.
+
 - **Turtle language support.**
-    - Syntax highlighting.
+    - Syntax highlighting, including the Turtle 1.2 syntax.
     - Syntax errors in the Problems panel.
     - An outline of all defined entities, with their types.
     - **Go to Definition** and hover information for prefixed names and IRIs.
@@ -106,6 +115,7 @@ npm run watch              # rebuild on change; press F5 in VS Code to launch th
 
 npm run typecheck && npm run lint && npm run format:check
 npm run test:unit          # engine (incl. Carapace's own test suite), grammar, RDF/XML, extension host with a fake vscode API
+npm run test:w3c           # the official W3C Turtle 1.1 + 1.2 test suites (fetched from github.com/w3c/rdf-tests)
 npm run test:webview       # end-to-end tests of the graph webview in Chromium (Playwright)
 npm run test:integration   # the extension running inside a real VS Code instance (@vscode/test-electron)
 npm run package            # produce a .vsix

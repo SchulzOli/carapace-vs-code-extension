@@ -50,16 +50,67 @@ export function computeLineMapping(
 		return "" + namespaceByPrefix.get(token.prefix ?? "") + token.value;
 	};
 
-	const ts = tokens ?? Array.from(new Lexer().tokenize(content));
+	// RDF 1.2: `<< s p o ~ r >>` reified triples, `<<( s p o )>>` triple terms, `{| ... |}` annotation blocks
+	let reifiedDepth = 0;
+	let tripleTermDepth = 0;
+	let annotationDepth = 0;
+	let statementIsReified = false;
+	let expectReifier = false;
+	const savedPredicates: (string | null)[] = [];
+
+	const ts = tokens ?? Array.from(new Lexer({ n3: false }).tokenize(content));
 	for (let i = 0; i < ts.length; i++) {
 		const token = ts[i];
-		if (token.type === ";") {
+		const isTerm = token.type === "prefixed" || token.type === "IRI";
+
+		if (expectReifier) {
+			expectReifier = false;
+			if (isTerm) {
+				// a named reifier is the subject of its rdf:reifies triple
+				const uri = resolveUri(token);
+				addToUri(token.line, uri);
+				if (statementIsReified && reifiedDepth === 1 && !subject) {
+					subject = uri;
+					suppressSubject = false;
+				}
+				addToLine(token.line, subject);
+				continue;
+			}
+		}
+
+		if (token.type === "<<") {
+			if (reifiedDepth === 0 && tripleTermDepth === 0 && annotationDepth === 0 && !subject) {
+				statementIsReified = true;
+			}
+			reifiedDepth++;
+		} else if (token.type === ">>") {
+			reifiedDepth = Math.max(0, reifiedDepth - 1);
+			// an unnamed reifier is a blank node: what follows belongs to it, not to a named subject
+			if (reifiedDepth === 0 && statementIsReified && !subject) suppressSubject = true;
+		} else if (token.type === "<<(") {
+			tripleTermDepth++;
+		} else if (token.type === ")>>") {
+			tripleTermDepth = Math.max(0, tripleTermDepth - 1);
+		} else if (token.type === "~") {
+			expectReifier = true;
+		} else if (token.type === "{|") {
+			savedPredicates.push(predicate);
+			annotationDepth++;
+		} else if (token.type === "|}") {
+			annotationDepth = Math.max(0, annotationDepth - 1);
+			predicate = savedPredicates.pop() ?? null;
+		} else if (reifiedDepth > 0 || tripleTermDepth > 0 || annotationDepth > 0) {
+			// terms inside quoted/annotated triples do not describe the statement's subject
+		} else if (token.type === ";") {
 			predicate = null;
 		} else if (token.type === ".") {
 			addToLine(token.line, subject);
 			subject = null;
 			predicate = null;
 			suppressSubject = false;
+			statementIsReified = false;
+			reifiedDepth = tripleTermDepth = annotationDepth = 0;
+			savedPredicates.length = 0;
 		} else if (DECLARATION_TYPES.has(token.type)) {
 			inDeclaration = true;
 			if (token.type === "@base" || token.type === "BASE") {
@@ -69,7 +120,7 @@ export function computeLineMapping(
 			suppressSubject = true;
 		} else if (token.type === "abbreviation" && token.value === "a") {
 			if (!suppressSubject && subject && !predicate) predicate = RDF_NS + "type";
-		} else if (token.type === "prefixed" || token.type === "IRI") {
+		} else if (isTerm) {
 			if (inDeclaration) {
 				inDeclaration = false;
 			} else if (!suppressSubject) {

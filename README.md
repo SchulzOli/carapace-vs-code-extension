@@ -123,6 +123,10 @@ npm run package            # produce a .vsix
 
 On Linux without a display, run integration tests with `xvfb-run -a npm run test:integration`. Regenerate the README screenshots with `SCREENSHOTS=1 npx playwright test screenshots`.
 
+## Releasing
+
+Pushing a version tag (`npm version minor && git push --follow-tags`) runs the full CI suite. If it passes, the extension is published to the VS Code Marketplace and Open VSX, and a GitHub Release is created. One-time setup and details: [docs/RELEASING.md](docs/RELEASING.md).
+
 ## Credits & licence
 
 Carapace is created by [sellsol](https://github.com/sellsol/carapace). This extension ports its graph engine, rendering and interaction design to VS Code. Like Carapace, it is licensed under the [GNU General Public License v3.0](LICENSE).

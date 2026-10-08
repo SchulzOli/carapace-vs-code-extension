@@ -1,0 +1,102 @@
+name: Release
+
+# Publishes the extension when a version tag (v1.2.3) is pushed, after the full CI suite has passed:
+#   1. VS Code Marketplace (needs the VSCE_PAT secret)
+#   2. Open VSX, used by VSCodium, Cursor, Gitpod, ... (optional, needs the OVSX_PAT secret)
+#   3. a GitHub Release with the .vsix attached
+# It can also be started by hand from the Actions tab, e.g. as a dry run that only builds the .vsix.
+
+on:
+    push:
+        tags: ["v*.*.*"]
+    workflow_dispatch:
+        inputs:
+            dry-run:
+                description: "Only build and upload the .vsix, publish nothing"
+                type: boolean
+                default: true
+            pre-release:
+                description: "Publish as a pre-release version"
+                type: boolean
+                default: false
+
+concurrency:
+    group: release
+    cancel-in-progress: false
+
+permissions:
+    contents: read
+
+jobs:
+    ci:
+        name: CI
+        uses: ./.github/workflows/ci.yml
+
+    publish:
+        name: Package & publish
+        needs: ci
+        runs-on: ubuntu-latest
+        environment: marketplace
+        permissions:
+            contents: write # create the GitHub Release
+        env:
+            DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+            PRE_RELEASE_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.pre-release && '--pre-release' || '' }}
+            VSCE_PAT: ${{ secrets.VSCE_PAT }}
+            OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+
+            - name: Check version
+              id: version
+              run: |
+                  version=$(node -p "require('./package.json').version")
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+                  if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
+                    echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version. Bump it with 'npm version'."
+                    exit 1
+                  fi
+
+            - name: Package
+              run: npx vsce package --no-dependencies $PRE_RELEASE_FLAG --out "carapace-vscode-${{ steps.version.outputs.version }}.vsix"
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: carapace-vscode-${{ steps.version.outputs.version }}
+                  path: "*.vsix"
+
+            - name: Publish to the VS Code Marketplace
+              if: env.DRY_RUN != 'true'
+              run: |
+                  if [[ -z "$VSCE_PAT" ]]; then
+                    echo "::error::The VSCE_PAT secret is not set (Settings → Environments → marketplace). See the Releasing section of the README."
+                    exit 1
+                  fi
+                  npx vsce publish --packagePath *.vsix --skip-duplicate $PRE_RELEASE_FLAG
+
+            - name: Publish to Open VSX
+              if: env.DRY_RUN != 'true'
+              run: |
+                  if [[ -z "$OVSX_PAT" ]]; then
+                    echo "::notice::OVSX_PAT is not set, skipping Open VSX."
+                    exit 0
+                  fi
+                  npx ovsx publish --packagePath *.vsix --skip-duplicate $PRE_RELEASE_FLAG
+
+            - name: Create GitHub Release
+              if: env.DRY_RUN != 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  TAG: v${{ steps.version.outputs.version }}
+              run: |
+                  if gh release view "$TAG" >/dev/null 2>&1; then
+                    gh release upload "$TAG" *.vsix --clobber
+                  else
+                    gh release create "$TAG" *.vsix --target "$GITHUB_SHA" --title "$TAG" --generate-notes \
+                      ${PRE_RELEASE_FLAG:+--prerelease}
+                  fi

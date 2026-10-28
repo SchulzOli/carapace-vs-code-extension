@@ -50,7 +50,7 @@ jobs:
             - name: Print the Azure DevOps identity of the app
               run: |
                   # 499b84ac-… is the resource ID of Azure DevOps / the Visual Studio Marketplace
-                  id=$(az rest -u https://app.vssps.visualstudio.com/_apis/profile/profiles/me \
+                  id=$(az rest -u "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=6.0" \
                     --resource 499b84ac-1321-427f-aa17-267ca6975798 --query id -o tsv)
                   echo "Add this ID as a member (role: Contributor) of your Marketplace publisher: $id"
                   {

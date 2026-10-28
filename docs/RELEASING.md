@@ -14,7 +14,7 @@ Re-running a release is safe: versions that are already published are skipped.
 ### 1. VS Code Marketplace publisher (required)
 
 1. Sign in to <https://marketplace.visualstudio.com/manage> with a Microsoft account and create a publisher.
-2. The publisher **ID** must equal the `publisher` field in [`package.json`](../package.json), currently `schulzoli`. If you pick a different ID, change that field to match.
+2. The publisher **ID** must equal the `publisher` field in [`package.json`](../package.json), currently `SchulzOli`, with that exact capitalization. If you pick a different ID, change that field to match.
 
 ### 2. Let GitHub sign in to the Marketplace (required): Microsoft Entra ID, no token
 
@@ -27,16 +27,21 @@ The workflow signs in to the Marketplace with **Microsoft Entra ID through GitHu
 
     No Azure subscription is needed. From its _Overview_ page, note the **Application (client) ID** and the **Directory (tenant) ID**.
 
-2. **Trust this repository.** In the app registration, open _Certificates & secrets → Federated credentials → Add credential_ and choose the scenario _GitHub Actions deploying Azure resources_:
-    - Organization: `SchulzOli`
-    - Repository: `carapace-vs-code-extension`
-    - Entity type: **Environment**, environment name: **`marketplace`**
+    An app registration you already use for another extension (for example BC Atlas) works too: it is then already a member of the publisher, so only steps 2, 3 and 6 are needed here.
+
+2. **Trust this repository.** In the app registration, open _Certificates & secrets → Federated credentials → Add credential_ and choose the scenario **_Other issuer_**:
+    - Issuer: `https://token.actions.githubusercontent.com`
+    - Subject identifier: `repo:SchulzOli@153920877/carapace-vs-code-extension@1410265165:environment:marketplace`
+    - Audience: `api://AzureADTokenExchange`
     - Name: e.g. `github-release`
+
+    GitHub puts the owner and repository IDs into the subject for this repository. The _GitHub Actions deploying Azure resources_ template builds a subject from the names only, and the sign-in then fails with `AADSTS700213: No matching federated identity record found`; the error message shows the subject GitHub presented.
+
 3. **Store the IDs in GitHub.** In this repository, open _Settings → Environments → **marketplace**_ (create it if it does not exist yet). Add two environment **variables**, not secrets, because these IDs are not confidential:
     - `AZURE_CLIENT_ID`: the Application (client) ID
     - `AZURE_TENANT_ID`: the Directory (tenant) ID
 4. **Get the app's Marketplace ID.** Open _Actions → Release → Run workflow_ and tick only **"Setup helper: print the ID …"**. The run's summary shows an ID.
-5. **Allow the app to publish.** At <https://marketplace.visualstudio.com/manage>, open your publisher → _Members → Add_. Paste that ID and give it the **Contributor** role.
+5. **Allow the app to publish.** At <https://marketplace.visualstudio.com/manage>, open your publisher → _Members → Add_. Paste that ID and give it the **Contributor** role. The Marketplace knows the app only by this Azure DevOps ID, not by its Entra IDs. Until it is a member, _Check Marketplace access_ fails with "Access Denied: … needs the following permission(s) on the resource /SchulzOli"; that message names the same ID.
 6. **Check it.** Run _Actions → Release → Run workflow_ as a **dry run**. The step _Check Marketplace access_ must pass. It verifies that the app may publish to the publisher, without publishing anything.
 
 <details>
@@ -60,7 +65,7 @@ Global tokens like this can no longer be used after 1 December 2026.
 2. Create an access token in _Settings → Access Tokens_.
 3. Create the namespace once. It must equal the `publisher` field:
     ```bash
-    npx ovsx create-namespace schulzoli -p <token>
+    npx ovsx create-namespace SchulzOli -p <token>
     ```
 4. Add it as environment secret **`OVSX_PAT`** in the **marketplace** environment.
 
